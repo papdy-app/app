@@ -1,0 +1,45 @@
+{
+    "require": [
+        "ssh.json"
+    ],
+    "system": {
+        "serverNames": [
+            "app",
+            "app2",
+            "app3"
+        ],
+        "bashServer": "app"
+    },
+    "global": {
+        "systemName": "papdy"
+    },
+    "app": {
+        "imageName": "fewedev/cli",
+        "imageTag": "8.3",
+        "containerVolumes": [
+            "${systemPath}:/var/www/papdy:me:w"
+        ],
+        "bashPath": "/var/www/papdy",
+        "bashUser": "me",
+        "sshAccesses": [
+            "me:app2:me",
+            "me:app3:me"
+        ]
+    },
+    "app2": {
+        "imageName": "fewedev/cli",
+        "imageTag": "8.3",
+        "containerVolumes": [
+            "${systemPath}:/var/www/papdy:me:w"
+        ],
+        "bashUser": "www-data"
+    },
+    "app3": {
+        "imageName": "fewedev/cli",
+        "imageTag": "8.3",
+        "containerVolumes": [
+            "${systemPath}:/var/www/papdy:me:w"
+        ],
+        "bashUser": "www-data"
+    }
+}
