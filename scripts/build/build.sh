@@ -330,7 +330,11 @@ if [[ -n "${buildLink}" ]]; then
     linkSource="${nextBuildLinkParts[0]}"
     linkTarget="${nextBuildLinkParts[1]}"
     if [[ "${linkSource}" == "${linkSource#/}" ]]; then
-      linkSourcePath="${buildPath}/${buildSharedPath}/${linkSource}"
+      if [[ "${buildSharedPath}" == "${buildSharedPath#/}" ]]; then
+        linkSourcePath="${buildPath}/${buildSharedPath}/${linkSource}"
+      else
+        linkSourcePath="${buildSharedPath}/${linkSource}"
+      fi
     else
       linkSourcePath="${linkSource}"
     fi

@@ -48,10 +48,6 @@ if [[ -z "${deploySharedPath}" ]]; then
   deploySharedPath="shared"
 fi
 
-if [[ -z "${deploySharedPath}" ]]; then
-  deploySharedPath="shared"
-fi
-
 if [[ -z "${webPath}" ]]; then
   webPath="${deployPath}/current"
 fi
@@ -139,7 +135,11 @@ if [[ -n "${deployLink}" ]]; then
     linkTarget="${nextBuildLinkParts[1]}"
     linkMode="${nextBuildLinkParts[2]}"
     if [[ "${linkSource}" == "${linkSource#/}" ]]; then
-      linkSourcePath="${deployPath}/${deploySharedPath}/${linkSource}"
+      if [[ "${deploySharedPath}" == "${deploySharedPath#/}" ]]; then
+        linkSourcePath="${deployPath}/${deploySharedPath}/${linkSource}"
+      else
+        linkSourcePath="${deploySharedPath}/${linkSource}"
+      fi
     else
       linkSourcePath="${linkSource}"
     fi
