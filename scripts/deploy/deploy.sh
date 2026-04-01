@@ -196,6 +196,26 @@ if [[ -n "${deployLink}" ]]; then
   done
 fi
 
+if [[ -L "${webPath}" ]]; then
+  if [[ "${deployUser}" != "${currentUser}" ]]; then
+    echo "Removing previous web path link: ${webPath} with user: ${deployUser}"
+    sudo -H -u "${deployUser}" bash -c "rm \"${webPath}\""
+  else
+    echo "Removing previous web path link: ${webPath}"
+    rm "${webPath}"
+  fi
+fi
+
+if [[ -d "${webPath}" ]]; then
+  if [[ "${deployUser}" != "${currentUser}" ]]; then
+    echo "Moving previous web path: ${webPath} with user: ${deployUser}"
+    sudo -H -u "${deployUser}" bash -c "mv \"${webPath}\" \"${webPath}_old\""
+  else
+    echo "Moving previous web path: ${linkTargetPath}"
+    mv "${webPath}" "${webPath}_old"
+  fi
+fi
+
 if [[ "${deployUser}" != "${currentUser}" ]]; then
   echo "Linking release from: ${deployIdPath} to: ${webPath} with user: ${deployUser}"
   sudo -H -u "${deployUser}" bash -c "ln -sf \"${deployIdPath}\" \"${webPath}\""

@@ -383,7 +383,11 @@ cd "${buildNamePath}"
 if [[ -f composer.json ]]; then
   if [[ -n "${buildMemoryLimit}" ]]; then
     echo "Using memory limit: ${buildMemoryLimit}"
-    processEnvironmentVariables+=("COMPOSER_MEMORY_LIMIT=${buildMemoryLimit}")
+    if [[ "${buildUser}" != "${currentUser}" ]]; then
+      processEnvironmentVariables+=("COMPOSER_MEMORY_LIMIT=${buildMemoryLimit}")
+    else
+      export "COMPOSER_MEMORY_LIMIT=${buildMemoryLimit}"
+    fi
   fi
   if [[ "${buildUser}" != "${currentUser}" ]]; then
     echo "Installing composer project in path: ${buildNamePath} with user: ${buildUser}"

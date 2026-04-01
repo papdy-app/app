@@ -38,8 +38,8 @@ class Build extends Base
             '--projectUser= : Project user to use if composer build',
             '--projectPassword= : Project password to use if composer build',
             '--sharedPath= : Path to shared directory',
-            '--phpExecutable=php : Path to PHP executable, default: php',
-            '--composerExecutable=composer : Path to Composer executable, default: composer',
+            '--phpExecutable= : Path to PHP executable',
+            '--composerExecutable= : Path to Composer executable',
             '--memoryLimit= : Use this memory limit',
         ];
     }
