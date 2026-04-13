@@ -11,6 +11,9 @@ namespace App\Models\Process\Parameter;
  */
 class Build extends Base
 {
+    /**
+     * @return array<int|string, string>
+     */
     protected function getServerValues(): array
     {
         return [
@@ -19,11 +22,17 @@ class Build extends Base
         ];
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected function getServerLists(): array
     {
         return [];
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected function getComponentValues(): array
     {
         return [
@@ -39,6 +48,9 @@ class Build extends Base
         ];
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected function getComponentLists(): array
     {
         return ['link' => 'buildLink@', 'env' => 'buildEnv@'];

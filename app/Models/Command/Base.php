@@ -13,6 +13,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 abstract class Base
 {
+    /**
+     * @param array<string, array<int, string>|bool|string> $parameters
+     */
     abstract public function run(
         OutputInterface $output,
         string $serverName,
@@ -21,6 +24,25 @@ abstract class Base
         bool $isQuiet
     ): string;
 
+    abstract public function download(
+        OutputInterface $output,
+        string $serverName,
+        string $serverFileName,
+        string $localFileName,
+        bool $isQuiet
+    ): void;
+
+    abstract public function upload(
+        OutputInterface $output,
+        string $serverName,
+        string $localFileName,
+        string $serverFileName,
+        bool $isQuiet
+    ): void;
+
+    /**
+     * @param array<string, array<int, string>|bool|string> $parameters
+     */
     protected function completeCommand(string $scriptPath, array $parameters): string
     {
         $command = $scriptPath;
@@ -63,7 +85,7 @@ abstract class Base
         );
 
         // return exit status and intended output
-        return is_array($matches) && array_key_exists(
+        return array_key_exists(
             0,
             $matches
         ) ? [
@@ -82,20 +104,4 @@ abstract class Base
             ),
         ] : [99, $completeOutput];
     }
-
-    abstract public function download(
-        OutputInterface $output,
-        string $serverName,
-        string $serverFileName,
-        string $localFileName,
-        bool $isQuiet
-    ): void;
-
-    abstract public function upload(
-        OutputInterface $output,
-        string $serverName,
-        string $localFileName,
-        string $serverFileName,
-        bool $isQuiet
-    ): void;
 }

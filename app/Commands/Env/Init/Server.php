@@ -94,7 +94,7 @@ class Server extends Base
 
             if (!in_array(
                 $sshAuth,
-                ['agent', 'password', 'keys', 'files']
+                ['agent', 'password', 'key', 'file']
             )) {
                 return $this->exitWithError(
                     sprintf(
@@ -104,17 +104,17 @@ class Server extends Base
                 );
             }
 
-            if ($sshAuth === 'password') {
+            if ('password' === $sshAuth) {
                 $sshPassword = $this->getRequiredOption(
                     'sshPassword',
                     'No SSH password specified!'
                 );
-            } elseif ($sshAuth === 'key') {
+            } elseif ('key' === $sshAuth) {
                 $sshPrivateKey = $this->getRequiredOption(
                     'sshPrivateKey',
                     'No SSH private key specified!'
                 );
-            } elseif ($sshAuth === 'file') {
+            } elseif ('file' === $sshAuth) {
                 $sshPrivateKeyFile = $this->getRequiredOption(
                     'sshPrivateKeyFile',
                     'No SSH private key file specified!'

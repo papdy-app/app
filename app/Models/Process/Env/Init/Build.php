@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Process\Env\Init;
 
 use App\Exceptions\InputOptionException;
+use App\Exceptions\InvalidConfigurationException;
 use App\Models\Process\Base;
 
 /**
@@ -30,7 +31,7 @@ class Build extends Base
         ?string $composerExecutable,
         ?string $memoryLimit,
     ): void {
-        if ($type !== 'git' && $type !== 'composer') {
+        if ('git' !== $type && 'composer' !== $type) {
             throw new InputOptionException(
                 sprintf(
                     'Invalid build type: %s',
@@ -43,6 +44,10 @@ class Build extends Base
             $serverName,
             $host
         );
+
+        if ($this->variables->isEmpty($serverName)) {
+            throw new InvalidConfigurationException('Invalid server name');
+        }
 
         if ($this->variables->isEmpty($id)) {
             $id = sprintf(

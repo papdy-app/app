@@ -11,16 +11,25 @@ namespace App\Models\Process\Parameter;
  */
 class Deploy extends Base
 {
+    /**
+     * @return array<int|string, string>
+     */
     protected function getServerValues(): array
     {
         return [];
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected function getServerLists(): array
     {
         return [];
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected function getComponentValues(): array
     {
         return [
@@ -31,6 +40,9 @@ class Deploy extends Base
         ];
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected function getComponentLists(): array
     {
         return ['link' => 'deployLink@'];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Process\Env\Init;
 
+use App\Exceptions\InvalidConfigurationException;
 use App\Models\Process\Base;
 
 /**
@@ -26,6 +27,10 @@ class Deploy extends Base
             $serverName,
             $host
         );
+
+        if ($this->variables->isEmpty($serverName)) {
+            throw new InvalidConfigurationException('Invalid server name');
+        }
 
         if ($this->variables->isEmpty($id)) {
             $id = sprintf(

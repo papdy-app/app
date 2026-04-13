@@ -16,6 +16,11 @@ abstract class Base
 {
     public function __construct(protected Variables $variables, protected Config $config) {}
 
+    /**
+     * @param array<string, array<int, string>|bool|string> $parameters
+     *
+     * @return array<string, array<int, string>|bool|string>
+     */
     public function execute(
         string $serverName,
         string $componentId,
@@ -36,14 +41,33 @@ abstract class Base
         );
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     abstract protected function getServerValues(): array;
 
+    /**
+     * @return array<int|string, string>
+     */
     abstract protected function getServerLists(): array;
 
+    /**
+     * @return array<int|string, string>
+     */
     abstract protected function getComponentValues(): array;
 
+    /**
+     * @return array<int|string, string>
+     */
     abstract protected function getComponentLists(): array;
 
+    /**
+     * @param array<string, array<int, string>|bool|string> $parameters
+     * @param array<int|string, string>                     $values
+     * @param array<int|string, string>                     $lists
+     *
+     * @return array<string, array<int, string>|bool|string>
+     */
     protected function processParameters(
         array $parameters,
         string $sectionId,
@@ -53,33 +77,31 @@ abstract class Base
         foreach ($values as $source => $target) {
             $default = null;
 
-            if (is_string($target)) {
-                if (str_contains(
-                    $target,
-                    '|'
-                )) {
-                    [$target, $default] = explode(
-                        '|',
-                        $target
-                    );
-                }
+            if (str_contains(
+                $target,
+                '|'
+            )) {
+                [$target, $default] = explode(
+                    '|',
+                    $target
+                );
+            }
 
-                if (str_ends_with(
+            if (str_ends_with(
+                $target,
+                '?'
+            )) {
+                $target = substr(
                     $target,
-                    '?'
-                )) {
-                    $target = substr(
-                        $target,
-                        0,
-                        -1
-                    );
+                    0,
+                    -1
+                );
 
-                    if (array_key_exists(
-                        $target,
-                        $parameters
-                    )) {
-                        continue;
-                    }
+                if (array_key_exists(
+                    $target,
+                    $parameters
+                )) {
+                    continue;
                 }
             }
 
@@ -175,11 +197,19 @@ abstract class Base
                 $isRequired
             );
 
-            if (!$this->variables->isEmpty($list)) {
+            if (count($list) > 0) {
+                $listValues = [];
+
+                foreach ($list as $listValue) {
+                    if (is_string($listValue)) {
+                        $listValues[] = $listValue;
+                    }
+                }
+
                 $parameters[$target] = $implode ? implode(
                     ',',
-                    $list
-                ) : $list;
+                    $listValues
+                ) : $listValues;
             }
         }
 

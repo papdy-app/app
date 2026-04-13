@@ -4,5 +4,6 @@
 /.vagrant
 /.vscode
 /env.ini
+/shared
 /storage
 /vendor

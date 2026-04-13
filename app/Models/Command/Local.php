@@ -14,6 +14,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Local extends Base
 {
+    /**
+     * @param array<string, array<int, string>|bool|string> $parameters
+     */
     public function run(
         OutputInterface $output,
         string $serverName,
@@ -44,45 +47,16 @@ class Local extends Base
             );
         }
 
-        return $scriptOutput;
-    }
-
-    /**
-     * @return array<int, null|int|string>
-     */
-    private function process(string $command, bool $isQuiet): array
-    {
-        $proc = popen(
-            "{$command} 2>&1 ; echo Exit status: $?",
-            'r'
-        );
-
-        if (false === $proc) {
+        if (!is_string($scriptOutput)) {
             throw new ScriptException(
                 sprintf(
-                    'Error while executing command: %s',
-                    $command
+                    'Invalid script output: %s',
+                    $scriptOutput
                 )
             );
         }
 
-        $completeOutput = '';
-
-        while (!feof($proc)) {
-            $liveOutput = fread(
-                $proc,
-                4096
-            );
-            $completeOutput = $completeOutput.$liveOutput;
-            if (!$isQuiet) {
-                echo "{$liveOutput}";
-            }
-            @flush();
-        }
-
-        pclose($proc);
-
-        return $this->processResult($completeOutput);
+        return $scriptOutput;
     }
 
     public function download(
@@ -181,5 +155,43 @@ class Local extends Base
             $localFileName,
             $serverFileName,
         );
+    }
+
+    /**
+     * @return array<int, null|int|string>
+     */
+    private function process(string $command, bool $isQuiet): array
+    {
+        $proc = popen(
+            "{$command} 2>&1 ; echo Exit status: $?",
+            'r'
+        );
+
+        if (false === $proc) {
+            throw new ScriptException(
+                sprintf(
+                    'Error while executing command: %s',
+                    $command
+                )
+            );
+        }
+
+        $completeOutput = '';
+
+        while (!feof($proc)) {
+            $liveOutput = fread(
+                $proc,
+                4096
+            );
+            $completeOutput = $completeOutput.$liveOutput;
+            if (!$isQuiet) {
+                echo "{$liveOutput}";
+            }
+            @flush();
+        }
+
+        pclose($proc);
+
+        return $this->processResult($completeOutput);
     }
 }

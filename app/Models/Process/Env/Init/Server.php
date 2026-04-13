@@ -36,50 +36,64 @@ class Server extends Base
         );
 
         if ('remote' === $type || 'ssh' === $type) {
-            $this->config->set(
-                $name,
-                'host',
-                $host
-            );
+            if (null !== $host) {
+                $this->config->set(
+                    $name,
+                    'host',
+                    $host
+                );
+            }
         }
 
         if ('ssh' === $type) {
-            $this->config->set(
-                $name,
-                'port',
-                $sshPort
-            );
-
-            $this->config->set(
-                $name,
-                'user',
-                $sshUser
-            );
-
-            $this->config->set(
-                $name,
-                'auth',
-                $sshAuth
-            );
-
-            if ($sshAuth === 'password') {
+            if (null !== $sshPort) {
                 $this->config->set(
                     $name,
-                    'password',
-                    $sshPassword
+                    'port',
+                    $sshPort
                 );
-            } elseif ($sshAuth === 'key') {
+            }
+
+            if (null !== $sshUser) {
                 $this->config->set(
                     $name,
-                    'privateKey',
-                    $sshPrivateKey
+                    'user',
+                    $sshUser
                 );
-            } elseif ($sshAuth === 'file') {
+            }
+
+            if (null !== $sshAuth) {
                 $this->config->set(
                     $name,
-                    'privateKeyFile',
-                    $sshPrivateKeyFile
+                    'auth',
+                    $sshAuth
                 );
+            }
+
+            if ('password' === $sshAuth) {
+                if (null !== $sshPassword) {
+                    $this->config->set(
+                        $name,
+                        'password',
+                        $sshPassword
+                    );
+                }
+            } elseif ('key' === $sshAuth) {
+                if (null !== $sshPrivateKey) {
+                    $this->config->set(
+                        $name,
+                        'privateKey',
+                        $sshPrivateKey
+                    );
+                }
+            } elseif ('file' === $sshAuth) {
+                if (null !== $sshPrivateKeyFile) {
+                    $this->config->set(
+                        $name,
+                        'privateKeyFile',
+                        $sshPrivateKeyFile
+                    );
+                }
             }
         }
     }
