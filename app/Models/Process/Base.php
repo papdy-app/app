@@ -502,11 +502,18 @@ abstract class Base
         array $parameters,
         bool $isQuiet
     ): string {
+        $shell = $this->config->requiredValue(
+            $serverName,
+            'shell'
+        );
+
         $scriptPath = sprintf(
-            '%s%s%s%s%s',
+            '%s%s%s%s%s%s%s',
             base_path(),
             DIRECTORY_SEPARATOR,
             'scripts',
+            DIRECTORY_SEPARATOR,
+            $shell,
             DIRECTORY_SEPARATOR,
             $scriptName
         );

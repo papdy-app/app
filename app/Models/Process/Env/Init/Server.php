@@ -23,6 +23,7 @@ class Server extends Base
         ?string $sshPassword,
         ?string $sshPrivateKey,
         ?string $sshPrivateKeyFile,
+        string $shell,
     ): void {
         $this->config->add(
             'system',
@@ -96,5 +97,11 @@ class Server extends Base
                 }
             }
         }
+
+        $this->config->set(
+            $name,
+            'shell',
+            $shell
+        );
     }
 }

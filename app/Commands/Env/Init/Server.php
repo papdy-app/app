@@ -36,6 +36,7 @@ class Server extends Base
             '--sshPassword= : Password if type == ssh and sshAuth == password',
             '--sshPrivateKey= : Private key if type == ssh and sshAuth == keys',
             '--sshPrivateKeyFile= : Private key if type == ssh and sshAuth == files',
+            '--shell=bash : Shell to use',
         ];
     }
 
@@ -122,6 +123,11 @@ class Server extends Base
             }
         }
 
+        $shell = $this->getRequiredOption(
+            'shell',
+            'No shell specified!'
+        );
+
         $process = $this->app->make(\App\Models\Process\Env\Init\Server::class);
 
         $process->execute(
@@ -134,6 +140,7 @@ class Server extends Base
             $sshPassword,
             $sshPrivateKey,
             $sshPrivateKeyFile,
+            $shell,
         );
 
         return self::SUCCESS;
