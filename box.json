@@ -1,9 +1,9 @@
 {
-    "chmod": "0755",
     "directories": [
         "app",
         "bootstrap",
         "config",
+        "scripts",
         "vendor"
     ],
     "files": [
@@ -14,5 +14,6 @@
     "compactors": [
         "KevinGH\\Box\\Compactor\\Php",
         "KevinGH\\Box\\Compactor\\Json"
-    ]
+    ],
+    "output": "build/papdy.phar"
 }

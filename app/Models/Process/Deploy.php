@@ -15,46 +15,34 @@ class Deploy extends Base
 {
     public function execute(OutputInterface $output, string $name): void
     {
-        $buildServerBuildNameFile = $this->run(
-            $output,
-            'deploy/build.sh',
-            ['build'],
-            ['name' => $name]
-        );
+        $buildServerBuildNameFile = $this->runScript($output, 'deploy/build.sh', [], ['build'], ['name' => $name]);
 
         $localBuildPath = storage_path('build');
-        $localBuildNameFile = sprintf(
-            '%s/%s',
-            $localBuildPath,
-            basename($buildServerBuildNameFile),
-        );
+        $localBuildNameFile = sprintf('%s/%s', $localBuildPath, basename($buildServerBuildNameFile));
 
-        $this->download(
-            $output,
-            $buildServerBuildNameFile,
-            $localBuildNameFile,
-            ['build'],
-        );
+        $this->download($output, $buildServerBuildNameFile, $localBuildNameFile, ['build']);
 
         $deployServerBuildNameFile = sprintf(
-            '/tmp/%s',
+            '%s%s%s',
+            sys_get_temp_dir(),
+            DIRECTORY_SEPARATOR,
             basename($buildServerBuildNameFile),
         );
 
-        $this->upload(
-            $output,
-            $localBuildNameFile,
-            $deployServerBuildNameFile,
-            ['deploy:all'],
-        );
+        $this->upload($output, $localBuildNameFile, $deployServerBuildNameFile, ['deploy:all']);
 
         $deployId = date('Y_m_d_H_m_s');
 
-        $this->run(
+        $this->runScript(
             $output,
             'deploy/deploy.sh',
+            [],
             ['deploy:all'],
             ['name' => $name, 'deployId' => $deployId, 'buildNameFile' => $deployServerBuildNameFile],
+            [],
+            [],
+            ['deployPre'],
+            ['deployPost'],
         );
     }
 }

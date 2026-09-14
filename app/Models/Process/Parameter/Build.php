@@ -16,10 +16,7 @@ class Build extends Base
      */
     protected function getServerValues(): array
     {
-        return [
-            'phpExecutable',
-            'composerExecutable',
-        ];
+        return ['phpExecutable', 'composerExecutable'];
     }
 
     /**
@@ -53,6 +50,6 @@ class Build extends Base
      */
     protected function getComponentLists(): array
     {
-        return ['link' => 'buildLink@', 'env' => 'buildEnv@'];
+        return ['link' => 'buildLink@', 'env' => 'buildEnv@', 'pre' => 'buildPre@', 'post' => 'buildPost@'];
     }
 }

@@ -16,44 +16,32 @@ class Local extends Base
 {
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
+     * @param array<int, string>                            $fileUploadParameters
+     * @param array<int, string>                            $fileDownloadParameters
      */
     public function run(
         OutputInterface $output,
         string $serverName,
-        string $scriptPath,
+        string $command,
         array $parameters,
+        array $fileUploadParameters,
+        array $fileDownloadParameters,
         bool $isQuiet
     ): string {
-        $command = $this->completeCommand(
-            $scriptPath,
-            $parameters
-        );
+        $command = $this->completeCommand($command, $parameters);
 
         if (!$isQuiet) {
-            $output->writeln($command);
+            $output->writeln(sprintf('Executing: %s', $command));
         }
 
-        [$exitCode, $scriptOutput] = $this->process(
-            $command,
-            $isQuiet
-        );
+        [$exitCode, $scriptOutput] = $this->process($command, $isQuiet);
 
         if (0 !== $exitCode) {
-            throw new ScriptException(
-                sprintf(
-                    'Error while executing script: %s',
-                    $scriptPath
-                )
-            );
+            throw new ScriptException(sprintf('Error while executing script: %s', $command));
         }
 
         if (!is_string($scriptOutput)) {
-            throw new ScriptException(
-                sprintf(
-                    'Invalid script output: %s',
-                    $scriptOutput
-                )
-            );
+            throw new ScriptException(sprintf('Invalid script output: %s', $scriptOutput));
         }
 
         return $scriptOutput;
@@ -67,45 +55,22 @@ class Local extends Base
         bool $isQuiet
     ): void {
         if (!file_exists($serverFileName)) {
-            throw new ScriptException(
-                sprintf(
-                    'Server file not found: %s',
-                    $serverFileName
-                )
-            );
+            throw new ScriptException(sprintf('Server file not found: %s', $serverFileName));
         }
 
         if (!file_exists(dirname($localFileName))) {
             if (!$isQuiet) {
-                $output->writeln(
-                    sprintf(
-                        'Creating directory: %s',
-                        dirname($localFileName),
-                    )
-                );
+                $output->writeln(sprintf('Creating directory: %s', dirname($localFileName)));
             }
 
-            mkdir(
-                dirname($localFileName),
-                0755,
-                true
-            );
+            mkdir(dirname($localFileName), 0755, true);
         }
 
         if (!$isQuiet) {
-            $output->writeln(
-                sprintf(
-                    'Copying file from: %s to: %s',
-                    $serverFileName,
-                    $localFileName
-                )
-            );
+            $output->writeln(sprintf('Copying file from: %s to: %s', $serverFileName, $localFileName));
         }
 
-        copy(
-            $serverFileName,
-            $localFileName
-        );
+        copy($serverFileName, $localFileName);
     }
 
     public function upload(
@@ -116,77 +81,45 @@ class Local extends Base
         bool $isQuiet
     ): void {
         if (!file_exists($localFileName)) {
-            throw new ScriptException(
-                sprintf(
-                    'Local file not found: %s',
-                    $localFileName
-                )
-            );
+            throw new ScriptException(sprintf('Local file not found: %s', $localFileName));
         }
 
         if (!file_exists(dirname($serverFileName))) {
             if (!$isQuiet) {
-                $output->writeln(
-                    sprintf(
-                        'Creating directory: %s',
-                        dirname($serverFileName),
-                    )
-                );
+                $output->writeln(sprintf('Creating directory: %s', dirname($serverFileName)));
             }
 
-            mkdir(
-                dirname($serverFileName),
-                0755,
-                true
-            );
+            mkdir(dirname($serverFileName), 0755, true);
         }
 
         if (!$isQuiet) {
-            $output->writeln(
-                sprintf(
-                    'Copying file from: %s to: %s',
-                    $localFileName,
-                    $serverFileName,
-                )
-            );
+            $output->writeln(sprintf('Copying file from: %s to: %s', $localFileName, $serverFileName));
         }
 
-        copy(
-            $localFileName,
-            $serverFileName,
-        );
+        copy($localFileName, $serverFileName);
     }
 
     /**
      * @return array<int, null|int|string>
      */
-    private function process(string $command, bool $isQuiet): array
+    protected function process(string $command, bool $isQuiet): array
     {
-        $proc = popen(
-            "{$command} 2>&1 ; echo Exit status: $?",
-            'r'
-        );
+        $proc = popen("{$command} 2>&1 ; echo Exit status: $?", 'r');
 
         if (false === $proc) {
-            throw new ScriptException(
-                sprintf(
-                    'Error while executing command: %s',
-                    $command
-                )
-            );
+            throw new ScriptException(sprintf('Error while executing command: %s', $command));
         }
 
         $completeOutput = '';
 
         while (!feof($proc)) {
-            $liveOutput = fread(
-                $proc,
-                4096
-            );
+            $liveOutput = fread($proc, 4096);
             $completeOutput = $completeOutput.$liveOutput;
+
             if (!$isQuiet) {
                 echo "{$liveOutput}";
             }
+
             @flush();
         }
 

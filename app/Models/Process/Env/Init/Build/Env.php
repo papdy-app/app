@@ -13,33 +13,14 @@ use App\Models\Process\Base;
  */
 class Env extends Base
 {
-    public function execute(
-        ?string $serverName,
-        ?string $host,
-        ?string $id,
-        string $name,
-        string $value
-    ): void {
-        $serverName = $this->getServerName(
-            $serverName,
-            $host
-        );
+    public function execute(?string $serverName, ?string $host, ?string $id, string $name, string $value): void
+    {
+        $serverName = $this->getServerName($serverName, $host);
 
         if ($this->variables->isEmpty($id)) {
-            $id = sprintf(
-                '%s_build',
-                $serverName
-            );
+            $id = sprintf('%s_build', $serverName);
         }
 
-        $this->config->add(
-            $id,
-            'env',
-            sprintf(
-                '%s=%s',
-                $name,
-                $value
-            )
-        );
+        $this->config->add($id, 'env', sprintf('%s=%s', $name, $value));
     }
 }

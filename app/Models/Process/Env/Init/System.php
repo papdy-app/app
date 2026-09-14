@@ -15,10 +15,6 @@ class System extends Base
 {
     public function execute(string $name): void
     {
-        $this->config->set(
-            'system',
-            'name',
-            $name
-        );
+        $this->config->set('system', 'name', $name);
     }
 }

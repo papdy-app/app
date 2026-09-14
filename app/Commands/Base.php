@@ -6,7 +6,6 @@ namespace App\Commands;
 
 use App\Exceptions\CommandException;
 use App\Exceptions\InputOptionException;
-use App\Models\Config;
 use FeWeDev\Base\Variables;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Helper\DescriptorHelper;
@@ -18,16 +17,11 @@ use Symfony\Component\Console\Helper\DescriptorHelper;
  */
 abstract class Base extends Command
 {
-    public function __construct(protected Variables $variables, protected Config $config)
+    public function __construct(protected Variables $variables)
     {
-        $this->signature = count($this->getCommandParameters()) > 0 ? sprintf(
-            '%s {%s}',
-            $this->getCommandName(),
-            implode(
-                '} {',
-                $this->getCommandParameters()
-            )
-        ) : $this->getCommandName();
+        $this->signature = count($this->getCommandParameters()) > 0 ?
+            sprintf('%s {%s}', $this->getCommandName(), implode('} {', $this->getCommandParameters())) :
+            $this->getCommandName();
 
         $this->description = $this->getCommandDescription();
 
@@ -39,10 +33,7 @@ abstract class Base extends Command
         try {
             return $this->executeCommand();
         } catch (CommandException $exception) {
-            return $this->exitWithError(
-                $exception->getMessage(),
-                $exception->getCode()
-            );
+            return $this->exitWithError($exception->getMessage(), $exception->getCode());
         }
     }
 
@@ -63,10 +54,7 @@ abstract class Base extends Command
         $this->output->writeln('');
 
         $helper = new DescriptorHelper();
-        $helper->describe(
-            $this->output,
-            $this
-        );
+        $helper->describe($this->output, $this);
 
         return $resultCode;
     }
@@ -80,37 +68,63 @@ abstract class Base extends Command
 
         if ($isRequired && $this->variables->isEmpty($value)) {
             if (null === $errorMessage) {
-                $errorMessage = sprintf(
-                    'The "%s" option is required.',
-                    $name
-                );
+                $errorMessage = sprintf('The "%s" option is required.', $name);
             }
 
             throw new InputOptionException($errorMessage);
         }
 
         if (is_array($value)) {
-            throw new InputOptionException(
-                sprintf(
-                    'The option "%s" in invalid.',
-                    $name
-                )
-            );
+            throw new InputOptionException(sprintf('The option "%s" in invalid.', $name));
         }
 
         return null === $value ? $value : strval($value);
     }
 
+    /**
+     * @return array<int, string>
+     *
+     * @throws InputOptionException
+     */
+    protected function getOptionList(string $name, bool $isRequired = false, ?string $errorMessage = null): array
+    {
+        $value = $this->option($name);
+
+        if ($isRequired && $this->variables->isEmpty($value)) {
+            if (null === $errorMessage) {
+                $errorMessage = sprintf('The "%s" option is required.', $name);
+            }
+
+            throw new InputOptionException($errorMessage);
+        }
+
+        if (!is_array($value)) {
+            throw new InputOptionException(sprintf('The option "%s" in invalid.', $name));
+        }
+
+        return $value;
+    }
+
     protected function getRequiredOption(string $name, string $errorMessage): string
     {
-        $option = $this->getOption(
-            $name,
-            true,
-            $errorMessage
-        );
+        $option = $this->getOption($name, true, $errorMessage);
 
         if (null === $option) {
             throw new InputOptionException($errorMessage);
+        }
+
+        return $option;
+    }
+
+    /**
+     * @param string[] $allowedValues
+     */
+    protected function getAllowedOption(string $name, array $allowedValues, string $errorMessage): string
+    {
+        $option = $this->getRequiredOption($name, $errorMessage);
+
+        if (!in_array($option, $allowedValues, true)) {
+            throw new InputOptionException(sprintf($errorMessage, $option));
         }
 
         return $option;
@@ -124,5 +138,20 @@ abstract class Base extends Command
     protected function isEmptyValue(mixed $value): bool
     {
         return $this->variables->isEmpty($value) || '-' === $value;
+    }
+
+    protected function prepareDefaultInputOption(string $name, mixed $defaultValue, string $description): string
+    {
+        return sprintf('--%s=%s : %s', $name, $this->variables->stringValue($defaultValue), $description);
+    }
+
+    protected function prepareInputOption(string $name, string $description, bool $isArray = false): string
+    {
+        return $isArray ? sprintf('--%s=* : %s', $name, $description) : sprintf('--%s= : %s', $name, $description);
+    }
+
+    protected function prepareInputFlag(string $name, string $description): string
+    {
+        return sprintf('--%s : %s', $name, $description);
     }
 }

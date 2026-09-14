@@ -15,11 +15,16 @@ class Build extends Base
 {
     public function execute(OutputInterface $output, string $name): void
     {
-        $this->run(
+        $this->runScript(
             $output,
             'build/build.sh',
+            [],
             ['build:all'],
-            ['name' => $name]
+            ['name' => $name],
+            [],
+            [],
+            ['buildPre'],
+            ['buildPost']
         );
     }
 }

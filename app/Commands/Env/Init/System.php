@@ -28,7 +28,7 @@ class System extends Base
     protected function getCommandParameters(): array
     {
         return [
-            '--name=default : Name of system, default: system',
+            $this->prepareDefaultInputOption('name', 'system', 'Name of system'),
         ];
     }
 

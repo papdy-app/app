@@ -6,6 +6,9 @@ namespace App\Models\Command;
 
 use App\Exceptions\ScriptException;
 use App\Models\Config;
+use App\Models\Path;
+use FeWeDev\Base\Arrays;
+use FeWeDev\Base\Variables;
 use phpseclib3\Crypt\Common\PrivateKey;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SCP;
@@ -19,29 +22,38 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class SSH extends Base
 {
-    public function __construct(protected Config $config) {}
+    public function __construct(
+        protected Variables $variables,
+        protected Arrays $arrays,
+        protected Config $config,
+        protected Path $path
+    ) {}
 
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
+     * @param array<int, string>                            $fileUploadParameters
+     * @param array<int, string>                            $fileDownloadParameters
      */
     public function run(
         OutputInterface $output,
         string $serverName,
-        string $scriptPath,
+        string $command,
         array $parameters,
+        array $fileUploadParameters,
+        array $fileDownloadParameters,
         bool $isQuiet
     ): string {
         $scp = $this->getScp($serverName);
 
-        $host = $this->getHost($serverName);
-        $port = $this->getPort($serverName);
-        $user = $this->getUser($serverName);
+        $shell = $this->config->requiredValue($serverName, 'shell');
 
         $parameterScriptPath = sprintf(
-            '%s%s%s%s%s',
-            base_path(),
+            '%s%s%s%s%s%s%s',
+            $this->path->getBasePath(),
             DIRECTORY_SEPARATOR,
             'scripts',
+            DIRECTORY_SEPARATOR,
+            $shell,
             DIRECTORY_SEPARATOR,
             'prepare-parameters.sh'
         );
@@ -53,6 +65,10 @@ class SSH extends Base
             DIRECTORY_SEPARATOR,
             'prepare-parameters.sh'
         );
+
+        $host = $this->getHost($serverName);
+        $port = $this->getPort($serverName);
+        $user = $this->getUser($serverName);
 
         $this->copyFileToHost(
             $output,
@@ -71,18 +87,48 @@ class SSH extends Base
             $host,
             $port,
             $user,
-            $scriptPath,
-            basename($scriptPath),
+            $command,
+            basename($command),
             true
         );
 
-        $command = $this->completeCommand(
-            sprintf(
-                './%s',
-                basename($scriptPath)
-            ),
-            $parameters
-        );
+        foreach ($fileUploadParameters as $fileParameter) {
+            $file = $this->arrays->getValue($parameters, $fileParameter);
+
+            if (!$this->variables->isEmpty($file)) {
+                $file = $this->variables->stringValue($file);
+
+                if (file_exists($file)) {
+                    $this->copyFileToHost(
+                        $output,
+                        $scp,
+                        $host,
+                        $port,
+                        $user,
+                        $file,
+                        basename($file)
+                    );
+
+                    $parameters[$fileParameter] = basename($file);
+                }
+            }
+        }
+
+        $fileDownloads = [];
+
+        foreach ($fileDownloadParameters as $fileParameter) {
+            $file = $this->arrays->getValue($parameters, $fileParameter);
+
+            if (!$this->variables->isEmpty($file)) {
+                $file = $this->variables->stringValue($file);
+
+                $parameters[$fileParameter] = basename($file);
+
+                $fileDownloads[basename($file)] = $file;
+            }
+        }
+
+        $command = $this->completeCommand(sprintf('./%s', basename($command)), $parameters);
 
         if (!$isQuiet) {
             $output->writeln($command);
@@ -103,28 +149,27 @@ class SSH extends Base
             }
         );
 
-        $completeOutput = rtrim(
-            $completeOutput,
-            "\n"
-        );
+        $completeOutput = rtrim($completeOutput, "\n");
 
         [$exitCode, $scriptOutput] = $this->processResult($completeOutput);
 
         if (0 !== $exitCode) {
-            throw new ScriptException(
-                sprintf(
-                    'Error while executing script: %s',
-                    $scriptPath
-                )
-            );
+            throw new ScriptException(sprintf('Error while executing script: %s', $command));
         }
 
         if (!is_string($scriptOutput)) {
-            throw new ScriptException(
-                sprintf(
-                    'Invalid script output: %s',
-                    $scriptOutput
-                )
+            throw new ScriptException(sprintf('Invalid script output: %s', $scriptOutput));
+        }
+
+        foreach ($fileDownloads as $remoteFileName => $localFileName) {
+            $this->copyFileFromHost(
+                $output,
+                $scp,
+                $host,
+                $port,
+                $user,
+                $remoteFileName,
+                $localFileName
             );
         }
 
@@ -173,111 +218,55 @@ class SSH extends Base
         $port = $this->getPort($serverName);
         $user = $this->getUser($serverName);
 
-        $scp = new SCP(
-            $host,
-            $port
-        );
+        $scp = new SCP($host, $port);
 
-        $auth = $this->config->requiredValue(
-            $serverName,
-            'auth'
-        );
+        $auth = $this->config->requiredValue($serverName, 'auth');
 
         if ('agent' === $auth) {
             $agent = new Agent();
 
-            $result = $scp->login(
-                $user,
-                $agent
-            );
+            $result = $scp->login($user, $agent);
         } elseif ('password' === $auth) {
-            $password = $this->config->requiredValue(
-                $serverName,
-                'password'
-            );
+            $password = $this->config->requiredValue($serverName, 'password');
 
-            $result = $scp->login(
-                $user,
-                $password
-            );
+            $result = $scp->login($user, $password);
         } elseif ('key' === $auth) {
-            $privateKey = $this->config->requiredValue(
-                $serverName,
-                'privateKey'
-            );
+            $privateKey = $this->config->requiredValue($serverName, 'privateKey');
 
             $key = PublicKeyLoader::load($privateKey);
 
             if (!$key instanceof PrivateKey) {
-                throw new ScriptException(
-                    sprintf(
-                        'Invalid private key: %s',
-                        $privateKey
-                    )
-                );
+                throw new ScriptException(sprintf('Invalid private key: %s', $privateKey));
             }
 
-            $result = $scp->login(
-                $user,
-                $key
-            );
+            $result = $scp->login($user, $key);
         } elseif ('file' === $auth) {
-            $privateKeyFile = $this->config->requiredValue(
-                $serverName,
-                'privateKeyFile'
-            );
+            $privateKeyFile = $this->config->requiredValue($serverName, 'privateKeyFile');
 
             if (!file_exists($privateKeyFile)) {
-                throw new ScriptException(
-                    sprintf(
-                        'Private key file does not exist: %s',
-                        $privateKeyFile
-                    )
-                );
+                throw new ScriptException(sprintf('Private key file does not exist: %s', $privateKeyFile));
             }
 
             $privateKeyContent = file_get_contents($privateKeyFile);
 
             if (false === $privateKeyContent) {
-                throw new ScriptException(
-                    sprintf(
-                        'Private key file could not be loaded from: %s',
-                        $privateKeyFile
-                    )
-                );
+                throw new ScriptException(sprintf('Private key file could not be loaded from: %s', $privateKeyFile));
             }
 
             $key = PublicKeyLoader::load($privateKeyContent);
 
             if (!$key instanceof PrivateKey) {
-                throw new ScriptException(
-                    sprintf(
-                        'Invalid private key file: %s',
-                        $privateKeyFile
-                    )
-                );
+                throw new ScriptException(sprintf('Invalid private key file: %s', $privateKeyFile));
             }
 
-            $result = $scp->login(
-                $user,
-                $key
-            );
+            $result = $scp->login($user, $key);
         } else {
-            throw new ScriptException(
-                sprintf(
-                    'Unsupported authentication method: %s',
-                    $auth
-                )
-            );
+            throw new ScriptException(sprintf('Unsupported authentication method: %s', $auth));
         }
 
         if (false === $result) {
             throw new ScriptException(
-                sprintf(
-                    'Could not authenticate with SSH agent to host: %s and port: %d.',
-                    $host,
-                    $port
-                )
+                sprintf('Could not authenticate with SSH agent to host: %s and port: %d.', $host, $port)
             );
         }
 
@@ -286,28 +275,17 @@ class SSH extends Base
 
     private function getHost(string $serverName): string
     {
-        return $this->config->requiredValue(
-            $serverName,
-            'host'
-        );
+        return $this->config->requiredValue($serverName, 'host');
     }
 
     private function getPort(string $serverName): int
     {
-        return intval(
-            $this->config->requiredValue(
-                $serverName,
-                'port'
-            )
-        );
+        return intval($this->config->requiredValue($serverName, 'port'));
     }
 
     private function getUser(string $serverName): string
     {
-        return $this->config->requiredValue(
-            $serverName,
-            'user'
-        );
+        return $this->config->requiredValue($serverName, 'user');
     }
 
     private function copyFileToHost(
@@ -321,48 +299,21 @@ class SSH extends Base
         bool $isExecutable = false,
     ): void {
         if (!file_exists($filePath)) {
-            throw new \InvalidArgumentException(
-                sprintf(
-                    'File at: %s does not exist.',
-                    $filePath
-                )
-            );
+            throw new \InvalidArgumentException(sprintf('File at: %s does not exist.', $filePath));
         }
 
-        $output->writeln(
-            sprintf(
-                'Copying file from: %s to: %s@%s:%s',
-                $filePath,
-                $user,
-                $host,
-                $remoteFileName
-            )
-        );
+        $output->writeln(sprintf('Copying file from: %s to: %s@%s:%s', $filePath, $user, $host, $remoteFileName));
 
-        $result = $scp->put(
-            $remoteFileName,
-            $filePath,
-            SCP::SOURCE_LOCAL_FILE
-        );
+        $result = $scp->put($remoteFileName, $filePath, SCP::SOURCE_LOCAL_FILE);
 
         if (false === $result) {
             throw new ScriptException(
-                sprintf(
-                    'Could not copy file: %s to SSH host: %s and port: %d.',
-                    $filePath,
-                    $host,
-                    $port
-                )
+                sprintf('Could not copy file: %s to SSH host: %s and port: %d.', $filePath, $host, $port)
             );
         }
 
         if ($isExecutable) {
-            $scp->exec(
-                sprintf(
-                    'chmod +x %s',
-                    $remoteFileName
-                )
-            );
+            $scp->exec(sprintf('chmod +x %s', $remoteFileName));
         }
     }
 
@@ -375,37 +326,16 @@ class SSH extends Base
         string $remoteFileName,
         string $filePath,
     ): void {
-        $output->writeln(
-            sprintf(
-                'Copying file from: %s@%s:%s to: %s',
-                $user,
-                $host,
-                $remoteFileName,
-                $filePath,
-            )
-        );
+        $output->writeln(sprintf('Copying file from: %s@%s:%s to: %s', $user, $host, $remoteFileName, $filePath));
 
-        $result = $scp->get(
-            $remoteFileName,
-            $filePath,
-        );
+        $result = $scp->get($remoteFileName, $filePath);
 
         if (false === $result) {
             throw new ScriptException(
-                sprintf(
-                    'Could not copy file: %s from SSH host: %s and port: %d.',
-                    $remoteFileName,
-                    $host,
-                    $port
-                )
+                sprintf('Could not copy file: %s from SSH host: %s and port: %d.', $remoteFileName, $host, $port)
             );
         }
 
-        $scp->exec(
-            sprintf(
-                'chmod +x %s',
-                $remoteFileName
-            )
-        );
+        $scp->exec(sprintf('chmod +x %s', $remoteFileName));
     }
 }

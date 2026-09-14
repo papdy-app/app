@@ -10,10 +10,6 @@ use Illuminate\Contracts\Container\BindingResolutionException;
  * @author      Andreas Knollmann
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
- *
- * @internal
- *
- * @coversNothing
  */
 class Deploy extends Base
 {
@@ -29,7 +25,7 @@ class Deploy extends Base
 
     protected function getCommandParameters(): array
     {
-        return ['--name= : Name of the branch, tag or pull request to deploy'];
+        return [$this->prepareInputOption('name', 'Name of the branch, tag or pull request to deploy')];
     }
 
     /**
@@ -37,17 +33,11 @@ class Deploy extends Base
      */
     protected function executeCommand(): int
     {
-        $name = $this->getRequiredOption(
-            'name',
-            'No name to deploy specified!'
-        );
+        $name = $this->getRequiredOption('name', 'No name to deploy specified!');
 
         $process = $this->app->make(\App\Models\Process\Deploy::class);
 
-        $process->execute(
-            $this->getOutput(),
-            $name
-        );
+        $process->execute($this->getOutput(), $name);
 
         return self::SUCCESS;
     }
