@@ -25,7 +25,11 @@ class Path
 
             $tempDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR);
 
-            $basePath = sprintf('%s%spapdy%s%s', $tempDir, DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, app()->version());
+            $basePath = implode(DIRECTORY_SEPARATOR, [
+                $tempDir,
+                'papdy',
+                app()->version(),
+            ]);
 
             if (!file_exists($basePath)) {
                 $this->files->createDirectory($basePath, 0755);
@@ -39,7 +43,7 @@ class Path
 
                     if (is_file($filePath)) {
                         unlink($filePath);
-                    } elseif (is_dir($filePath) && '.' !== $file && '..' !== $file && 'scripts' !== $file) {
+                    } elseif (is_dir($filePath) && !in_array($file, ['.', '..', 'scripts', 'storage'])) {
                         $this->files->removeDirectory($filePath);
                     }
                 }

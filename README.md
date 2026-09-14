@@ -8,7 +8,6 @@ This is simple application to build and deploy a PHP application on multiple ser
 
 **Latest:**
 
-
 ```bash
 cd /tmp && curl -sLO https://raw.githubusercontent.com/papdy-app/app/refs/heads/master/build/linux/papdy.deb && sudo dpkg -i papdy.deb
 ```
