@@ -21,7 +21,7 @@ class Config
 {
     public const FILE_NAME = 'env.ini';
 
-    /** @var array<string, array<string, array<string, int|string>|int|string>> */
+    /** @var array<string, array<string, array<string, int|string>|float|int|string>> */
     private array $config = [];
 
     private bool $hasChanges = false;
@@ -225,13 +225,13 @@ class Config
 
     private function getFileName(): string
     {
-        return base_path().DIRECTORY_SEPARATOR.self::FILE_NAME;
+        return getcwd().DIRECTORY_SEPARATOR.self::FILE_NAME;
     }
 
     /**
      * @param array<mixed> $config
      *
-     * @return array<string, array<string, array<string, int|string>|int|string>>
+     * @return array<string, array<string, array<string, int|string>|float|int|string>>
      */
     private function checkConfig(array $config): array
     {
@@ -248,7 +248,7 @@ class Config
             }
 
             foreach ($sectionData as $key => $value) {
-                if (!is_int($value) && !is_string($value) && !is_array($value)) {
+                if (!is_int($value) && !is_float($value) && !is_string($value) && !is_array($value)) {
                     throw new InvalidConfigurationException(
                         sprintf(
                             'Invalid data in section: %s and key: %s',

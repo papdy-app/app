@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Commands\Env\Init\Deploy;
 
-use App\Commands\Base;
 use Illuminate\Contracts\Container\BindingResolutionException;
 
 /**
@@ -26,13 +25,10 @@ class Link extends Base
 
     protected function getCommandParameters(): array
     {
-        return [
-            '--serverName= : Name of server to deploy on',
-            '--host=localhost : Host of server to deploy on',
-            '--id= : Id of deploy, default: [serverName]_deploy',
-            '--source= : Source path of link',
-            '--target= : Target path of link, default: [source]',
-        ];
+        return array_merge(
+            $this->getBaseCommandParameters(),
+            $this->getLinkCommandParameters()
+        );
     }
 
     /**
@@ -40,25 +36,26 @@ class Link extends Base
      */
     protected function executeCommand(): int
     {
-        $serverName = $this->getOption('serverName');
-        $host = $this->getOption('host');
-        $id = $this->getOption('id');
-        $source = $this->getRequiredOption(
-            'source',
-            'No source specified!'
-        );
+        [$serverName, $host, $id] = $this->getBaseOptions();
+
+        $source = $this->getRequiredOption('source', 'No source specified!');
         $target = $this->getOption('target');
 
         $process = $this->app->make(\App\Models\Process\Env\Init\Deploy\Link::class);
 
-        $process->execute(
-            $serverName,
-            $host,
-            $id,
-            $source,
-            $target
-        );
+        $process->execute($serverName, $host, $id, $source, $target);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function getLinkCommandParameters(): array
+    {
+        return [
+            $this->prepareInputOption('source', 'Source path of link'),
+            $this->prepareInputOption('target', 'Target path of link, default: [source]'),
+        ];
     }
 }

@@ -15,8 +15,8 @@
         }
     ],
     "require": {
-        "php": "^8.0",
-        "fewedev/base": "^1.4",
+        "php": "^8.3",
+        "fewedev/base": "^2.3",
         "laravel-zero/framework": "^12.0.2",
         "matomo/ini": "^3.0",
         "phpseclib/phpseclib": "^3.0"

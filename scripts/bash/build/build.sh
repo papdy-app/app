@@ -59,6 +59,22 @@ if [[ -z "${buildUser}" ]]; then
   buildUser="${currentUser}"
 fi
 
+processEnvironmentVariables=()
+if [[ -n "${buildEnv}" ]]; then
+  for nextBuildEnv in "${buildEnv[@]}"; do
+    IFS='=' read -ra nextBuildEnvParts <<< "${nextBuildEnv}"
+    envName="${nextBuildEnvParts[0]}"
+    envValue="${nextBuildEnvParts[1]}"
+    if [[ "${buildUser}" != "${currentUser}" ]]; then
+      echo "Exporting environment variable ${envName}=${envValue} with user: ${buildUser}"
+      processEnvironmentVariables+=("${envName}=${envValue}")
+    else
+      echo "Exporting environment variable ${envName}=${envValue}"
+      export "${envName}=${envValue}"
+    fi
+  done
+fi
+
 if [[ ! -d "${buildPath}" ]]; then
   set +e
   if [[ "${buildUser}" != "${currentUser}" ]]; then
@@ -361,23 +377,6 @@ if [[ -n "${buildLink}" ]]; then
   done
 fi
 
-processEnvironmentVariables=()
-
-if [[ -n "${buildEnv}" ]]; then
-  for nextBuildEnv in "${buildEnv[@]}"; do
-    IFS='=' read -ra nextBuildEnvParts <<< "${nextBuildEnv}"
-    name="${nextBuildEnvParts[0]}"
-    value="${nextBuildEnvParts[1]}"
-    if [[ "${buildUser}" != "${currentUser}" ]]; then
-      echo "Exporting environment variable ${name}=${value} with user: ${buildUser}"
-      processEnvironmentVariables+=("${name}=${value}")
-    else
-      echo "Exporting environment variable ${name}=${value}"
-      export "${name}=${value}"
-    fi
-  done
-fi
-
 cd "${buildNamePath}"
 
 if [[ -f composer.json ]]; then
@@ -420,8 +419,13 @@ if [[ -n "${buildLink}" ]]; then
 fi
 
 echo "Creating vcs-info.txt"
-echo "Version: ${name}" > vcs-info.txt
-echo "Build-Date: $(LC_ALL=en_US.utf8 date +"%Y-%m-%d %H:%M:%S %z")" >> vcs-info.txt
+if [[ "${buildUser}" != "${currentUser}" ]]; then
+  sudo -H -u "${buildUser}" bash -c "echo \"Version: ${name}\" > vcs-info.txt"
+  sudo -H -u "${buildUser}" bash -c "echo \"Build-Date: $(LC_ALL=en_US.utf8 date +"%Y-%m-%d %H:%M:%S %z")\" >> vcs-info.txt"
+else
+  echo "Version: ${name}" > vcs-info.txt
+  echo "Build-Date: $(LC_ALL=en_US.utf8 date +"%Y-%m-%d %H:%M:%S %z")" >> vcs-info.txt
+fi
 
 buildNameFile="${buildPath}/${buildName}.tar.gz"
 

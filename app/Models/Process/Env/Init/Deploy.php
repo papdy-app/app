@@ -23,56 +23,29 @@ class Deploy extends Base
         ?string $sharedPath,
         ?string $webPath,
     ): void {
-        $serverName = $this->getServerName(
-            $serverName,
-            $host
-        );
+        $serverName = $this->getServerName($serverName, $host);
 
         if ($this->variables->isEmpty($serverName)) {
             throw new InvalidConfigurationException('Invalid server name');
         }
 
         if ($this->variables->isEmpty($id)) {
-            $id = sprintf(
-                '%s_deploy',
-                $serverName
-            );
+            $id = sprintf('%s_deploy', $serverName);
         }
 
-        $this->config->set(
-            $serverName,
-            'deploy',
-            $id
-        );
-
-        $this->config->set(
-            $id,
-            'path',
-            $path
-        );
+        $this->config->set($serverName, 'deploy', $id);
+        $this->config->set($id, 'path', $path);
 
         if (!$this->variables->isEmpty($user)) {
-            $this->config->set(
-                $id,
-                'user',
-                $user
-            );
+            $this->config->set($id, 'user', $user);
         }
 
         if (!$this->variables->isEmpty($sharedPath)) {
-            $this->config->set(
-                $id,
-                'sharedPath',
-                $sharedPath
-            );
+            $this->config->set($id, 'sharedPath', $sharedPath);
         }
 
         if (!$this->variables->isEmpty($webPath)) {
-            $this->config->set(
-                $id,
-                'webPath',
-                $webPath
-            );
+            $this->config->set($id, 'webPath', $webPath);
         }
     }
 }

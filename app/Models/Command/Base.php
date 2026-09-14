@@ -15,12 +15,16 @@ abstract class Base
 {
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
+     * @param array<int, string>                            $fileUploadParameters
+     * @param array<int, string>                            $fileDownloadParameters
      */
     abstract public function run(
         OutputInterface $output,
         string $serverName,
-        string $scriptPath,
+        string $command,
         array $parameters,
+        array $fileUploadParameters,
+        array $fileDownloadParameters,
         bool $isQuiet
     ): string;
 
@@ -54,18 +58,12 @@ abstract class Base
 
             if (is_array($value)) {
                 foreach ($value as $nextValue) {
-                    $command .= sprintf(
-                        ' --%s "%s"',
-                        $key,
-                        $nextValue
-                    );
+                    $command .= sprintf(' --%s "%s"', $key, $nextValue);
                 }
+            } elseif (is_bool($value)) {
+                $command .= sprintf(' --%s', $key);
             } else {
-                $command .= sprintf(
-                    ' --%s "%s"',
-                    $key,
-                    $value
-                );
+                $command .= sprintf(' --%s "%s"', $key, $value);
             }
         }
 
@@ -78,30 +76,12 @@ abstract class Base
     protected function processResult(string $completeOutput): array
     {
         // get exit status
-        preg_match(
-            '/[0-9]+$/',
-            $completeOutput,
-            $matches
-        );
+        preg_match('/[0-9]+$/', $completeOutput, $matches);
 
         // return exit status and intended output
-        return array_key_exists(
-            0,
-            $matches
-        ) ? [
+        return array_key_exists(0, $matches) ? [
             intval($matches[0]),
-            preg_replace(
-                '/[\r\n]$/',
-                '',
-                str_replace(
-                    sprintf(
-                        'Exit status: %s',
-                        $matches[0]
-                    ),
-                    '',
-                    $completeOutput
-                )
-            ),
+            preg_replace('/[\r\n]$/', '', str_replace(sprintf('Exit status: %s', $matches[0]), '', $completeOutput)),
         ] : [99, $completeOutput];
     }
 }

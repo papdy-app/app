@@ -32,116 +32,55 @@ class Build extends Base
         ?string $memoryLimit,
     ): void {
         if ('git' !== $type && 'composer' !== $type) {
-            throw new InputOptionException(
-                sprintf(
-                    'Invalid build type: %s',
-                    $type
-                )
-            );
+            throw new InputOptionException(sprintf('Invalid build type: %s', $type));
         }
 
-        $serverName = $this->getServerName(
-            $serverName,
-            $host
-        );
+        $serverName = $this->getServerName($serverName, $host);
 
         if ($this->variables->isEmpty($serverName)) {
             throw new InvalidConfigurationException('Invalid server name');
         }
 
         if ($this->variables->isEmpty($id)) {
-            $id = sprintf(
-                '%s_build',
-                $serverName
-            );
+            $id = sprintf('%s_build', $serverName);
         }
 
-        $this->config->set(
-            $serverName,
-            'build',
-            $id
-        );
-
-        $this->config->set(
-            $id,
-            'path',
-            $path
-        );
+        $this->config->set($serverName, 'build', $id);
+        $this->config->set($id, 'path', $path);
 
         if (!$this->variables->isEmpty($user)) {
-            $this->config->set(
-                $id,
-                'user',
-                $user
-            );
+            $this->config->set($id, 'user', $user);
         }
 
-        $this->config->set(
-            $id,
-            'type',
-            $type
-        );
-
-        $this->config->set(
-            $id,
-            'url',
-            $url
-        );
+        $this->config->set($id, 'type', $type);
+        $this->config->set($id, 'url', $url);
 
         if (!$this->variables->isEmpty($project)) {
-            $this->config->set(
-                $id,
-                'project',
-                $project
-            );
+            $this->config->set($id, 'project', $project);
         }
 
         if (!$this->variables->isEmpty($projectUser)) {
-            $this->config->set(
-                $id,
-                'projectUser',
-                $projectUser
-            );
+            $this->config->set($id, 'projectUser', $projectUser);
         }
 
         if (!$this->variables->isEmpty($projectPassword)) {
-            $this->config->set(
-                $id,
-                'projectPassword',
-                $projectPassword
-            );
+            $this->config->set($id, 'projectPassword', $projectPassword);
         }
 
         if (!$this->variables->isEmpty($sharedPath)) {
-            $this->config->set(
-                $id,
-                'sharedPath',
-                $sharedPath
-            );
+            $this->config->set($id, 'sharedPath', $sharedPath);
         }
 
         if (!$this->variables->isEmpty($phpExecutable)) {
-            $this->config->set(
-                $serverName,
-                'phpExecutable',
-                $phpExecutable
-            );
+            $this->config->set($serverName, 'phpExecutable', $phpExecutable);
         }
 
         if (!$this->variables->isEmpty($composerExecutable)) {
-            $this->config->set(
-                $serverName,
-                'composerExecutable',
-                $composerExecutable
-            );
+            $this->config->set($serverName, 'composerExecutable', $composerExecutable);
         }
 
         if (!$this->variables->isEmpty($memoryLimit)) {
-            $this->config->set(
-                $id,
-                'memoryLimit',
-                $memoryLimit
-            );
+            $this->config->set($id, 'memoryLimit', $memoryLimit);
         }
     }
 }

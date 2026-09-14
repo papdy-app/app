@@ -21,22 +21,22 @@ class Server extends Base
 
     protected function getCommandDescription(): string
     {
-        return 'Init a new server';
+        return 'Initialize a server';
     }
 
     protected function getCommandParameters(): array
     {
         return [
-            '--name= : Name of system',
-            '--type=local : Server type (local/remote/ssh)',
-            '--host= : Host if type != local',
-            '--sshUser= : User if type == ssh',
-            '--sshPort=22 : Port if type == ssh',
-            '--sshAuth=agent : Auth if type == ssh (agent|password|key|file)',
-            '--sshPassword= : Password if type == ssh and sshAuth == password',
-            '--sshPrivateKey= : Private key if type == ssh and sshAuth == keys',
-            '--sshPrivateKeyFile= : Private key if type == ssh and sshAuth == files',
-            '--shell=bash : Shell to use',
+            $this->prepareInputOption('name', 'Name of server'),
+            $this->prepareDefaultInputOption('type', 'local', 'Server type (local/remote/ssh)'),
+            $this->prepareInputOption('host', 'Host if type != local'),
+            $this->prepareInputOption('sshUser', 'User if type == ssh'),
+            $this->prepareDefaultInputOption('sshPort', 22, 'Port if type == ssh'),
+            $this->prepareDefaultInputOption('sshAuth', 'agent', 'Auth if type == ssh (agent|password|key|file)'),
+            $this->prepareInputOption('sshPassword', 'Password if type == ssh and sshAuth == password'),
+            $this->prepareInputOption('sshPrivateKey', 'Private key if type == ssh and sshAuth == keys'),
+            $this->prepareInputOption('sshPrivateKeyFile', 'Private key if type == ssh and sshAuth == files'),
+            $this->prepareDefaultInputOption('shell', 'bash', 'Shell to use'),
         ];
     }
 
@@ -45,32 +45,10 @@ class Server extends Base
      */
     protected function executeCommand(): int
     {
-        $name = $this->getRequiredOption(
-            'name',
-            'No server name specified!'
-        );
-        $type = $this->getRequiredOption(
-            'type',
-            'No server type specified!'
-        );
+        $name = $this->getRequiredOption('name', 'No server name specified!');
+        $type = $this->getAllowedOption('type', ['local', 'remote', 'ssh'], 'Invalid server type specified: %s');
 
-        if ('local' !== $type && 'remote' !== $type && 'ssh' !== $type) {
-            return $this->exitWithError(
-                sprintf(
-                    'Invalid server type specified: %s',
-                    $type
-                )
-            );
-        }
-
-        if ('remote' === $type || 'ssh' === $type) {
-            $host = $this->getRequiredOption(
-                'host',
-                'No host specified!'
-            );
-        } else {
-            $host = null;
-        }
+        $host = 'remote' === $type || 'ssh' === $type ? $this->getRequiredOption('host', 'No host specified!') : null;
 
         $sshUser = null;
         $sshPort = null;
@@ -80,41 +58,18 @@ class Server extends Base
         $sshPrivateKeyFile = null;
 
         if ('ssh' === $type) {
-            $sshUser = $this->getRequiredOption(
-                'sshUser',
-                'No SSH user specified!'
-            );
-            $sshPort = $this->getRequiredOption(
-                'sshPort',
-                'No SSH port specified!'
-            );
-            $sshAuth = $this->getRequiredOption(
-                'sshAuth',
-                'No SSH auth specified!'
-            );
+            $sshUser = $this->getRequiredOption('sshUser', 'No SSH user specified!');
+            $sshPort = $this->getRequiredOption('sshPort', 'No SSH port specified!');
+            $sshAuth = $this->getRequiredOption('sshAuth', 'No SSH auth specified!');
 
-            if (!in_array(
-                $sshAuth,
-                ['agent', 'password', 'key', 'file']
-            )) {
-                return $this->exitWithError(
-                    sprintf(
-                        'Invalid SSH auth specified: %s',
-                        $sshAuth
-                    )
-                );
+            if (!in_array($sshAuth, ['agent', 'password', 'key', 'file'])) {
+                return $this->exitWithError(sprintf('Invalid SSH auth specified: %s', $sshAuth));
             }
 
             if ('password' === $sshAuth) {
-                $sshPassword = $this->getRequiredOption(
-                    'sshPassword',
-                    'No SSH password specified!'
-                );
+                $sshPassword = $this->getRequiredOption('sshPassword', 'No SSH password specified!');
             } elseif ('key' === $sshAuth) {
-                $sshPrivateKey = $this->getRequiredOption(
-                    'sshPrivateKey',
-                    'No SSH private key specified!'
-                );
+                $sshPrivateKey = $this->getRequiredOption('sshPrivateKey', 'No SSH private key specified!');
             } elseif ('file' === $sshAuth) {
                 $sshPrivateKeyFile = $this->getRequiredOption(
                     'sshPrivateKeyFile',
@@ -123,10 +78,7 @@ class Server extends Base
             }
         }
 
-        $shell = $this->getRequiredOption(
-            'shell',
-            'No shell specified!'
-        );
+        $shell = $this->getRequiredOption('shell', 'No shell specified!');
 
         $process = $this->app->make(\App\Models\Process\Env\Init\Server::class);
 
@@ -134,8 +86,8 @@ class Server extends Base
             $name,
             $type,
             $host,
-            $sshUser,
             $sshPort,
+            $sshUser,
             $sshAuth,
             $sshPassword,
             $sshPrivateKey,

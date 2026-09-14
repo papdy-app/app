@@ -21,11 +21,8 @@ abstract class Base
      *
      * @return array<string, array<int, string>|bool|string>
      */
-    public function execute(
-        string $serverName,
-        string $componentId,
-        array $parameters
-    ): array {
+    public function execute(string $serverName, string $componentId, array $parameters): array
+    {
         $parameters = $this->processParameters(
             $parameters,
             $serverName,
@@ -68,39 +65,19 @@ abstract class Base
      *
      * @return array<string, array<int, string>|bool|string>
      */
-    protected function processParameters(
-        array $parameters,
-        string $sectionId,
-        array $values,
-        array $lists
-    ): array {
+    protected function processParameters(array $parameters, string $sectionId, array $values, array $lists): array
+    {
         foreach ($values as $source => $target) {
             $default = null;
 
-            if (str_contains(
-                $target,
-                '|'
-            )) {
-                [$target, $default] = explode(
-                    '|',
-                    $target
-                );
+            if (str_contains($target, '|')) {
+                [$target, $default] = explode('|', $target);
             }
 
-            if (str_ends_with(
-                $target,
-                '?'
-            )) {
-                $target = substr(
-                    $target,
-                    0,
-                    -1
-                );
+            if (str_ends_with($target, '?')) {
+                $target = substr($target, 0, -1);
 
-                if (array_key_exists(
-                    $target,
-                    $parameters
-                )) {
+                if (array_key_exists($target, $parameters)) {
                     continue;
                 }
             }
@@ -108,42 +85,30 @@ abstract class Base
             if (is_numeric($source)) {
                 $source = $target;
 
-                if (str_ends_with(
-                    $target,
-                    '*'
-                )) {
-                    $target = substr(
-                        $target,
-                        0,
-                        -1
-                    );
+                if (str_ends_with($target, '*')) {
+                    $target = substr($target, 0, -1);
                 }
             }
 
-            if (str_ends_with(
-                $source,
-                '*'
-            )) {
+            if (str_ends_with($source, '*')) {
                 $isRequired = true;
-                $source = substr(
-                    $source,
-                    0,
-                    -1
-                );
+                $source = substr($source, 0, -1);
             } else {
                 $isRequired = false;
             }
 
-            $value = $this->config->value(
-                $sectionId,
-                $source,
-                $isRequired
-            );
+            $value = $this->config->value($sectionId, $source, $isRequired);
 
             if (!$this->variables->isEmpty($value)) {
                 $parameters[$target] = $value;
             } elseif (null !== $default) {
                 $parameters[$target] = $default;
+            } elseif ('host' === $source) {
+                $type = $this->config->value($sectionId, 'type');
+
+                if ('local' === $type) {
+                    $parameters[$target] = 'localhost';
+                }
             }
         }
 
@@ -151,51 +116,26 @@ abstract class Base
             if (is_numeric($source)) {
                 $source = $target;
 
-                if (str_ends_with(
-                    $target,
-                    '*'
-                )) {
-                    $target = substr(
-                        $target,
-                        0,
-                        -1
-                    );
+                if (str_ends_with($target, '*')) {
+                    $target = substr($target, 0, -1);
                 }
             }
 
-            if (str_ends_with(
-                $source,
-                '*'
-            )) {
+            if (str_ends_with($source, '*')) {
                 $isRequired = true;
-                $source = substr(
-                    $source,
-                    0,
-                    -1
-                );
+                $source = substr($source, 0, -1);
             } else {
                 $isRequired = false;
             }
 
-            if (str_ends_with(
-                $target,
-                '@'
-            )) {
+            if (str_ends_with($target, '@')) {
                 $implode = false;
-                $target = substr(
-                    $target,
-                    0,
-                    -1
-                );
+                $target = substr($target, 0, -1);
             } else {
                 $implode = true;
             }
 
-            $list = $this->config->list(
-                $sectionId,
-                $source,
-                $isRequired
-            );
+            $list = $this->config->list($sectionId, $source, $isRequired);
 
             if (count($list) > 0) {
                 $listValues = [];
@@ -206,10 +146,7 @@ abstract class Base
                     }
                 }
 
-                $parameters[$target] = $implode ? implode(
-                    ',',
-                    $listValues
-                ) : $listValues;
+                $parameters[$target] = $implode ? implode(',', $listValues) : $listValues;
             }
         }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Commands\Env\Init;
 
-use App\Commands\Base;
 use Illuminate\Contracts\Container\BindingResolutionException;
 
 /**
@@ -12,7 +11,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Build extends Base
+class Build extends Build\Base
 {
     protected function getCommandName(): string
     {
@@ -26,22 +25,22 @@ class Build extends Base
 
     protected function getCommandParameters(): array
     {
-        return [
-            '--serverName= : Name of server to build on',
-            '--host=localhost : Host of server to build on',
-            '--id= : Id of build, default: [serverName]_build',
-            '--path= : Path to build directory',
-            '--user= : User to use for build',
-            '--type=git : Type of build (git or composer)',
-            '--url= : URL to use',
-            '--project= : Project to use if composer build',
-            '--projectUser= : Project user to use if composer build',
-            '--projectPassword= : Project password to use if composer build',
-            '--sharedPath= : Path to shared directory',
-            '--phpExecutable= : Path to PHP executable',
-            '--composerExecutable= : Path to Composer executable',
-            '--memoryLimit= : Use this memory limit',
-        ];
+        return array_merge(
+            $this->getBaseCommandParameters(),
+            [
+                $this->prepareInputOption('path', 'Path to build directory'),
+                $this->prepareInputOption('user', 'User to use for build'),
+                $this->prepareDefaultInputOption('type', 'git', 'Type of build (git or composer)'),
+                $this->prepareInputOption('url', 'URL to use'),
+                $this->prepareInputOption('project', 'Project to use if composer build'),
+                $this->prepareInputOption('projectUser', 'Project user to use if composer build'),
+                $this->prepareInputOption('projectPassword', 'Project password to use if composer build'),
+                $this->prepareInputOption('sharedPath', 'Path to shared directory'),
+                $this->prepareInputOption('phpExecutable', 'Path to PHP executable'),
+                $this->prepareInputOption('composerExecutable', 'Path to Composer executable'),
+                $this->prepareInputOption('memoryLimit', 'Use this memory limit'),
+            ]
+        );
     }
 
     /**
@@ -49,22 +48,12 @@ class Build extends Base
      */
     protected function executeCommand(): int
     {
-        $serverName = $this->getOption('serverName');
-        $host = $this->getOption('host');
-        $id = $this->getOption('id');
-        $path = $this->getRequiredOption(
-            'path',
-            'No build path specified!'
-        );
+        [$serverName, $host, $id] = $this->getBaseOptions();
+
+        $path = $this->getRequiredOption('path', 'No build path specified!');
         $user = $this->getOption('user');
-        $type = $this->getRequiredOption(
-            'type',
-            'No build type specified!'
-        );
-        $url = $this->getRequiredOption(
-            'url',
-            'No build URL specified!'
-        );
+        $type = $this->getAllowedOption('type', ['git', 'composer'], 'Invalid build type!');
+        $url = $this->getRequiredOption('url', 'No build URL specified!');
         $project = $this->getOption('project');
         $projectUser = $this->getOption('projectUser');
         $projectPassword = $this->getOption('projectPassword');

@@ -16,7 +16,7 @@ class Deploy extends Base
      */
     protected function getServerValues(): array
     {
-        return [];
+        return ['phpExecutable', 'composerExecutable'];
     }
 
     /**
@@ -45,6 +45,6 @@ class Deploy extends Base
      */
     protected function getComponentLists(): array
     {
-        return ['link' => 'deployLink@'];
+        return ['link' => 'deployLink@', 'env' => 'deployEnv@', 'pre' => 'deployPre@', 'post' => 'deployPost@'];
     }
 }

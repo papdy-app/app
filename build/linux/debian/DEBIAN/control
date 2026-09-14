@@ -1,0 +1,5 @@
+Package: papdy
+Description: PHP Application Deployment
+Version: 0.3.0
+Maintainer: Andreas Knollmann
+Architecture: all

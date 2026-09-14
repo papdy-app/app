@@ -60,6 +60,22 @@ if [[ -z "${deployUser}" ]]; then
   deployUser="${currentUser}"
 fi
 
+processEnvironmentVariables=()
+if [[ -n "${deployEnv}" ]]; then
+  for nextDeployEnv in "${deployEnv[@]}"; do
+    IFS='=' read -ra nextDeployEnvParts <<< "${nextDeployEnv}"
+    envName="${nextDeployEnvParts[0]}"
+    envValue="${nextDeployEnvParts[1]}"
+    if [[ "${deployUser}" != "${currentUser}" ]]; then
+      echo "Exporting environment variable ${envName}=${envValue} with user: ${deployUser}"
+      processEnvironmentVariables+=("${envName}=${envValue}")
+    else
+      echo "Exporting environment variable ${envName}=${envValue}"
+      export "${envName}=${envValue}"
+    fi
+  done
+fi
+
 deployIdPath="${deployPath}/${deployId}"
 
 if [[ -d "${deployIdPath}" ]]; then

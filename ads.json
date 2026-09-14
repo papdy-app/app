@@ -1,6 +1,6 @@
 {
     "require": [
-        "ssh.json"
+        "{{{fewedev}}}/ssh.json"
     ],
     "system": {
         "serverNames": [
@@ -17,7 +17,7 @@
         "imageName": "fewedev/cli",
         "imageTag": "8.3",
         "containerVolumes": [
-            "${systemPath}:/var/www/papdy:me:w"
+            "{configPath}:/var/www/papdy:me:w"
         ],
         "bashPath": "/var/www/papdy",
         "bashUser": "me",
@@ -30,7 +30,7 @@
         "imageName": "fewedev/cli",
         "imageTag": "8.3",
         "containerVolumes": [
-            "${systemPath}:/var/www/papdy:me:w"
+            "{configPath}:/var/www/papdy:me:w"
         ],
         "bashUser": "www-data"
     },
@@ -38,7 +38,7 @@
         "imageName": "fewedev/cli",
         "imageTag": "8.3",
         "containerVolumes": [
-            "${systemPath}:/var/www/papdy:me:w"
+            "{configPath}:/var/www/papdy:me:w"
         ],
         "bashUser": "www-data"
     }
