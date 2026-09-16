@@ -9,10 +9,10 @@ use App\Models\Config;
 use App\Models\Path;
 use FeWeDev\Base\Arrays;
 use FeWeDev\Base\Variables;
-use phpseclib3\Crypt\Common\PrivateKey;
-use phpseclib3\Crypt\PublicKeyLoader;
-use phpseclib3\Net\SCP;
-use phpseclib3\System\SSH\Agent;
+use phpseclib4\Crypt\Common\PrivateKey;
+use phpseclib4\Crypt\PublicKeyLoader;
+use phpseclib4\Net\SCP;
+use phpseclib4\System\SSH\Agent;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -317,11 +317,13 @@ class SSH extends Base
 
         $output->writeln(sprintf('Copying file from: %s to: %s@%s:%s', $filePath, $user, $host, $remoteFileName));
 
-        $result = $scp->put($remoteFileName, $filePath, SCP::SOURCE_LOCAL_FILE);
-
-        if (false === $result) {
+        try {
+            $scp->put($remoteFileName, $filePath, SCP::SOURCE_LOCAL_FILE);
+        } catch (\RuntimeException $exception) {
             throw new ScriptException(
-                sprintf('Could not copy file: %s to SSH host: %s and port: %d.', $filePath, $host, $port)
+                sprintf('Could not copy file: %s to SSH host: %s and port: %d.', $filePath, $host, $port),
+                0,
+                $exception
             );
         }
 
@@ -341,11 +343,13 @@ class SSH extends Base
     ): void {
         $output->writeln(sprintf('Copying file from: %s@%s:%s to: %s', $user, $host, $remoteFileName, $filePath));
 
-        $result = $scp->get($remoteFileName, $filePath);
-
-        if (false === $result) {
+        try {
+            $scp->get($remoteFileName, $filePath);
+        } catch (\RuntimeException $exception) {
             throw new ScriptException(
-                sprintf('Could not copy file: %s from SSH host: %s and port: %d.', $remoteFileName, $host, $port)
+                sprintf('Could not copy file: %s from SSH host: %s and port: %d.', $remoteFileName, $host, $port),
+                0,
+                $exception
             );
         }
 

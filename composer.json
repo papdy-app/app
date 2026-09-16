@@ -19,7 +19,7 @@
         "fewedev/base": "^2.3",
         "laravel-zero/framework": "^12.0.2",
         "matomo/ini": "^3.0",
-        "phpseclib/phpseclib": "^3.0"
+        "phpseclib/phpseclib": "^4.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.94",
@@ -59,6 +59,11 @@
         "ps": "vendor/bin/phpstan analyse",
         "phar": "~/.config/composer/vendor/bin/box compile",
         "bin": "~/.config/composer/vendor/bin/phpacker build all --src=./build/papdy.phar --dest=./build/",
-        "deb": "cd build/linux && mkdir -p debian/usr/bin && cp linux-x64 debian/usr/bin/papdy && dpkg-deb --build debian papdy.deb && rm -rf debian/usr && cd ../.."
+        "deb": "cd build/linux && mkdir -p debian/usr/bin && cp linux-x64 debian/usr/bin/papdy && dpkg-deb --build debian papdy.deb && rm -rf debian/usr && cd ../..",
+        "build": [
+            "~/.config/composer/vendor/bin/box compile",
+            "~/.config/composer/vendor/bin/phpacker build all --src=./build/papdy.phar --dest=./build/",
+            "cd build/linux && mkdir -p debian/usr/bin && cp linux-x64 debian/usr/bin/papdy && dpkg-deb --build debian papdy.deb && rm -rf debian/usr && cd ../.."
+        ]
     }
 }
