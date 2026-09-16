@@ -9,8 +9,9 @@ $rules = [
     '@PSR12' => true,
     '@PhpCsFixer' => true,
     'operator_linebreak' => [
-        'position' => 'end',
-    ]
+        'position' => 'beginning',
+    ],
+    'multiline_whitespace_before_semicolons' => true
 ];
 
 $config = new PhpCsFixer\Config();

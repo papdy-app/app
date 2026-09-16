@@ -52,7 +52,7 @@ Three parallel layers exist for every operation, all following the same naming/n
 **Command execution (`App\Models\Command\**`)** — three interchangeable backends selected by a server's `type` in `env.ini`:
 - `Local` — runs shell commands with `popen`/`pclose` on the current machine, or does plain `copy()` for local up/download.
 - `Remote` — extends `Local` but only flags the command as `remote` (a `--remote` CLI flag passed through); upload/download are unimplemented (throws `ScriptException`). Intended for a build/deploy script invoked on a machine that is itself remote-orchestrating, not for arbitrary SSH.
-- `SSH` — uses `phpseclib3` SCP for exec/upload/download, supports `agent`/`password`/`key`/`file` auth (`Config` keys `auth`, `password`, `privateKey`, `privateKeyFile`).
+- `SSH` — uses the from-scratch, dependency-free SSH2 client under `App\Models\Ssh\**` (`Connection`/`Transport`/`Channel`/`ScpClient`; curve25519-sha256 KEX, aes256-ctr/hmac-sha2-256, ed25519/RSA host keys with opportunistic `~/.ssh/known_hosts` verification) for exec/upload/download, supports `agent`/`password`/`key`/`file` auth (`Config` keys `auth`, `password`, `privateKey`, `privateKeyFile`). Requires `ext-gmp`, `ext-openssl`, `ext-sodium`.
 
 All three share `completeCommand()` (turns an associative parameter array into `--key "value"` CLI args) and `processResult()` (parses the trailing `Exit status: N` marker appended to script output to recover the real exit code, since SSH exec doesn't expose one directly).
 
