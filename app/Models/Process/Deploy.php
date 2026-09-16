@@ -38,9 +38,18 @@ class Deploy extends Base
         parent::__construct($variables, $arrays, $strings, $config, $app, $path, $local, $remote, $ssh);
     }
 
-    public function execute(OutputInterface $output, string $name): void
+    /**
+     * @param array<int, string> $servers
+     */
+    public function execute(OutputInterface $output, array $servers, string $name): void
     {
-        $buildServerBuildNameFile = $this->runScript($output, 'deploy/build.sh', [], ['build'], ['name' => $name]);
+        $buildServerBuildNameFile = $this->runScript(
+            $output,
+            'deploy/build.sh',
+            [],
+            ['build:single'],
+            ['name' => $name]
+        );
 
         $localBuildPath = storage_path('build');
 
@@ -62,7 +71,7 @@ class Deploy extends Base
 
         $localBuildNameFile = sprintf('%s/%s', $localBuildPath, basename($buildServerBuildNameFile));
 
-        $this->download($output, $buildServerBuildNameFile, $localBuildNameFile, ['build']);
+        $this->download($output, $buildServerBuildNameFile, $localBuildNameFile, ['build:single']);
 
         $deployServerBuildNameFile = sprintf(
             '%s%s%s',
@@ -71,7 +80,9 @@ class Deploy extends Base
             basename($buildServerBuildNameFile),
         );
 
-        $this->upload($output, $localBuildNameFile, $deployServerBuildNameFile, ['deploy:all']);
+        $deployServer = sprintf('deploy:%s', count($servers) > 0 ? implode(',', $servers) : 'all');
+
+        $this->upload($output, $localBuildNameFile, $deployServerBuildNameFile, [$deployServer]);
 
         $deployId = date('Y_m_d_H_m_s');
 
@@ -79,12 +90,18 @@ class Deploy extends Base
             $output,
             'deploy/deploy.sh',
             [],
-            ['deploy:all'],
+            [$deployServer],
             ['name' => $name, 'deployId' => $deployId, 'buildNameFile' => $deployServerBuildNameFile],
             [],
             [],
             ['deployPre'],
             ['deployPost'],
         );
+
+        $this->delete($output, $deployServerBuildNameFile, [$deployServer]);
+
+        $output->writeln(sprintf('Deleting file at: %s', $localBuildNameFile));
+
+        unlink($localBuildNameFile);
     }
 }

@@ -99,6 +99,19 @@ class Local extends Base
         copy($localFileName, $serverFileName);
     }
 
+    public function delete(OutputInterface $output, string $serverName, string $serverFileName, bool $isQuiet): void
+    {
+        if (!file_exists($serverFileName)) {
+            throw new ScriptException(sprintf('Server file not found: %s', $serverFileName));
+        }
+
+        if (!$isQuiet) {
+            $output->writeln(sprintf('Deleting file at: %s', $serverFileName));
+        }
+
+        unlink($serverFileName);
+    }
+
     /**
      * @return array<int, null|int|string>
      */

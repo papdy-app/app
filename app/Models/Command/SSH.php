@@ -212,6 +212,19 @@ class SSH extends Base
         );
     }
 
+    public function delete(OutputInterface $output, string $serverName, string $serverFileName, bool $isQuiet): void
+    {
+        $scp = $this->getScp($serverName);
+        $host = $this->getHost($serverName);
+        $user = $this->getUser($serverName);
+
+        if (!$isQuiet) {
+            $output->writeln(sprintf('Deleting file at: %s@%s:%s', $user, $host, $serverFileName));
+        }
+
+        $scp->exec(sprintf('rm -rf %s', $serverFileName));
+    }
+
     private function getScp(string $serverName): SCP
     {
         $host = $this->getHost($serverName);

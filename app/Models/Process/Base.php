@@ -91,7 +91,7 @@ abstract class Base
     /**
      * @param array<int, string>                            $scriptPaths
      * @param array<int, string>                            $components
-     * @param array<string, array<int, string>|bool|string> $parameters
+     * @param array<string, array<int, string>|bool|string> $baseParameters
      * @param array<int, string>                            $fileUploadParameters
      * @param array<int, string>                            $fileDownloadParameters
      * @param array<int, string>                            $preCommandParameters
@@ -102,12 +102,13 @@ abstract class Base
         string $scriptName,
         array $scriptPaths,
         array $components,
-        array $parameters,
+        array $baseParameters,
         array $fileUploadParameters = [],
         array $fileDownloadParameters = [],
         array $preCommandParameters = [],
         array $postCommandParameters = [],
-        bool $isQuiet = false
+        bool $isQuiet = false,
+        bool $isFirst = true
     ): string {
         $component = array_shift($components);
 
@@ -119,7 +120,7 @@ abstract class Base
             [$componentName, $componentMode] = explode(':', $component);
         } else {
             $componentName = $component;
-            $componentMode = 'single';
+            $componentMode = $isFirst ? 'all' : 'single';
         }
 
         if ('single' === $componentMode) {
@@ -133,7 +134,7 @@ abstract class Base
                         $serverName,
                         $componentName,
                         $componentId,
-                        $parameters
+                        $baseParameters
                     );
 
                     if (count($components) > 0) {
@@ -169,45 +170,30 @@ abstract class Base
             return '';
         }
 
-        if ('all' === $componentMode) {
-            $serverList = $this->getServerList();
+        $componentServerList = $this->getComponentServerList($componentMode);
 
-            $hasAny = false;
-            $allOutputs = [];
+        $hasAny = false;
+        $allOutputs = [];
 
-            foreach ($serverList as $serverName) {
-                $componentId = $this->config->value($serverName, $componentName);
+        foreach ($componentServerList as $serverName) {
+            $componentId = $this->config->value($serverName, $componentName);
 
-                if (!$this->variables->isEmpty($componentId)) {
-                    $hasAny = true;
+            if (!$this->variables->isEmpty($componentId)) {
+                $hasAny = true;
 
-                    $parameters = $this->prepareServerParameters(
-                        $serverName,
-                        $componentName,
-                        $componentId,
-                        $parameters
-                    );
+                $parameters = $this->prepareServerParameters(
+                    $serverName,
+                    $componentName,
+                    $componentId,
+                    $baseParameters
+                );
 
-                    if (count($components) > 0) {
-                        return $this->runScript(
-                            $output,
-                            $scriptName,
-                            $scriptPaths,
-                            $components,
-                            $parameters,
-                            $fileUploadParameters,
-                            $fileDownloadParameters,
-                            $preCommandParameters,
-                            $postCommandParameters,
-                            $isQuiet
-                        );
-                    }
-
-                    $allOutputs[] = $this->executeRun(
+                if (count($components) > 0) {
+                    return $this->runScript(
                         $output,
-                        $serverName,
                         $scriptName,
                         $scriptPaths,
+                        $components,
                         $parameters,
                         $fileUploadParameters,
                         $fileDownloadParameters,
@@ -216,16 +202,27 @@ abstract class Base
                         $isQuiet
                     );
                 }
-            }
 
-            if (!$hasAny) {
-                throw new ScriptException(sprintf('No servers found for component: %s', $componentName));
+                $allOutputs[] = $this->executeRun(
+                    $output,
+                    $serverName,
+                    $scriptName,
+                    $scriptPaths,
+                    $parameters,
+                    $fileUploadParameters,
+                    $fileDownloadParameters,
+                    $preCommandParameters,
+                    $postCommandParameters,
+                    $isQuiet
+                );
             }
-
-            return implode(PHP_EOL, $allOutputs);
         }
 
-        throw new ScriptException(sprintf('Invalid run component: %s', $component));
+        if (!$hasAny) {
+            throw new ScriptException(sprintf('No servers found for component: %s', $componentName));
+        }
+
+        return implode(PHP_EOL, $allOutputs);
     }
 
     /**
@@ -236,7 +233,8 @@ abstract class Base
         string $serverFileName,
         string $localFileName,
         array $components,
-        bool $isQuiet = false
+        bool $isQuiet = false,
+        bool $isFirst = true
     ): void {
         $component = array_shift($components);
 
@@ -248,7 +246,7 @@ abstract class Base
             [$componentName, $componentMode] = explode(':', $component);
         } else {
             $componentName = $component;
-            $componentMode = 'single';
+            $componentMode = $isFirst ? 'all' : 'single';
         }
 
         if ('single' === $componentMode) {
@@ -259,7 +257,7 @@ abstract class Base
 
                 if (!$this->variables->isEmpty($componentId)) {
                     if (count($components) > 0) {
-                        $this->download($output, $serverFileName, $localFileName, $components, $isQuiet);
+                        $this->download($output, $serverFileName, $localFileName, $components, $isQuiet, false);
                     } else {
                         $this->executeDownload($output, $serverName, $serverFileName, $localFileName, $isQuiet);
                     }
@@ -267,23 +265,22 @@ abstract class Base
                     return;
                 }
             }
-        } elseif ('all' === $componentMode) {
-            $serverList = $this->getServerList();
+        } else {
+            $componentServerList = $this->getComponentServerList($componentMode);
 
             $hasAny = false;
 
-            foreach ($serverList as $serverName) {
+            foreach ($componentServerList as $serverName) {
                 $componentId = $this->config->value($serverName, $componentName);
 
                 if (!$this->variables->isEmpty($componentId)) {
                     $hasAny = true;
 
                     if (count($components) > 0) {
-                        $this->download($output, $serverFileName, $localFileName, $components, $isQuiet);
+                        $this->download($output, $serverFileName, $localFileName, $components, $isQuiet, false);
 
                         return;
                     }
-
                     $this->executeDownload($output, $serverName, $serverFileName, $localFileName, $isQuiet);
                 }
             }
@@ -291,8 +288,6 @@ abstract class Base
             if (!$hasAny) {
                 throw new ScriptException(sprintf('No servers found for component: %s', $componentName));
             }
-        } else {
-            throw new ScriptException(sprintf('Invalid download component: %s', $component));
         }
     }
 
@@ -304,6 +299,72 @@ abstract class Base
         string $localFileName,
         string $serverFileName,
         array $components,
+        bool $isQuiet = false,
+        bool $isFirst = true
+    ): void {
+        $component = array_shift($components);
+
+        if (null === $component) {
+            throw new ScriptException('No components defined');
+        }
+
+        if (str_contains($component, ':')) {
+            [$componentName, $componentMode] = explode(':', $component);
+        } else {
+            $componentName = $component;
+            $componentMode = $isFirst ? 'all' : 'single';
+        }
+
+        if ('single' === $componentMode) {
+            $serverList = $this->getServerList();
+
+            foreach ($serverList as $serverName) {
+                $componentId = $this->config->value($serverName, $componentName);
+
+                if (!$this->variables->isEmpty($componentId)) {
+                    if (count($components) > 0) {
+                        $this->upload($output, $localFileName, $serverFileName, $components, $isQuiet, false);
+                    } else {
+                        $this->executeUpload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+                    }
+
+                    return;
+                }
+            }
+        } else {
+            $componentServerList = $this->getComponentServerList($componentMode);
+
+            $hasAny = false;
+
+            foreach ($componentServerList as $serverName) {
+                $componentId = $this->config->value($serverName, $componentName);
+
+                if (!$this->variables->isEmpty($componentId)) {
+                    $hasAny = true;
+
+                    if (count($components) > 0) {
+                        $this->upload($output, $localFileName, $serverFileName, $components, $isQuiet, false);
+
+                        return;
+                    }
+
+                    $this->executeUpload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+                }
+            }
+
+            if (!$hasAny) {
+                throw new ScriptException(sprintf('No servers found for component: %s', $componentName));
+            }
+        }
+    }
+
+    /**
+     * @param array<int, string> $components
+     */
+    protected function delete(
+        OutputInterface $output,
+        string $serverFileName,
+        array $components,
         bool $isQuiet = false
     ): void {
         $component = array_shift($components);
@@ -327,40 +388,38 @@ abstract class Base
 
                 if (!$this->variables->isEmpty($componentId)) {
                     if (count($components) > 0) {
-                        $this->upload($output, $localFileName, $serverFileName, $components, $isQuiet);
+                        $this->delete($output, $serverFileName, $components, $isQuiet);
                     } else {
-                        $this->executeUpload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+                        $this->executeDelete($output, $serverName, $serverFileName, $isQuiet);
                     }
 
                     return;
                 }
             }
-        } elseif ('all' === $componentMode) {
-            $serverList = $this->getServerList();
+        } else {
+            $componentServerList = $this->getComponentServerList($componentMode);
 
             $hasAny = false;
 
-            foreach ($serverList as $serverName) {
+            foreach ($componentServerList as $serverName) {
                 $componentId = $this->config->value($serverName, $componentName);
 
                 if (!$this->variables->isEmpty($componentId)) {
                     $hasAny = true;
 
                     if (count($components) > 0) {
-                        $this->upload($output, $localFileName, $serverFileName, $components, $isQuiet);
+                        $this->delete($output, $serverFileName, $components, $isQuiet);
 
                         return;
                     }
 
-                    $this->executeUpload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+                    $this->executeDelete($output, $serverName, $serverFileName, $isQuiet);
                 }
             }
 
             if (!$hasAny) {
                 throw new ScriptException(sprintf('No servers found for component: %s', $componentName));
             }
-        } else {
-            throw new ScriptException(sprintf('Invalid download component: %s', $component));
         }
     }
 
@@ -571,14 +630,16 @@ abstract class Base
         $serverType = $this->config->requiredValue($serverName, 'type');
 
         if ('local' === $serverType) {
-            $this->local->download($output, $serverName, $serverFileName, $localFileName, $isQuiet);
+            $environment = $this->local;
         } elseif ('remote' === $serverType) {
-            $this->remote->download($output, $serverName, $serverFileName, $localFileName, $isQuiet);
+            $environment = $this->remote;
         } elseif ('ssh' === $serverType) {
-            $this->ssh->download($output, $serverName, $serverFileName, $localFileName, $isQuiet);
+            $environment = $this->ssh;
         } else {
             throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
         }
+
+        $environment->download($output, $serverName, $serverFileName, $localFileName, $isQuiet);
     }
 
     private function executeUpload(
@@ -591,13 +652,60 @@ abstract class Base
         $serverType = $this->config->requiredValue($serverName, 'type');
 
         if ('local' === $serverType) {
-            $this->local->upload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+            $environment = $this->local;
         } elseif ('remote' === $serverType) {
-            $this->remote->upload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+            $environment = $this->remote;
         } elseif ('ssh' === $serverType) {
-            $this->ssh->upload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+            $environment = $this->ssh;
         } else {
             throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
         }
+
+        $environment->upload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+    }
+
+    private function executeDelete(
+        OutputInterface $output,
+        string $serverName,
+        string $serverFileName,
+        bool $isQuiet
+    ): void {
+        $serverType = $this->config->requiredValue($serverName, 'type');
+
+        if ('local' === $serverType) {
+            $environment = $this->local;
+        } elseif ('remote' === $serverType) {
+            $environment = $this->remote;
+        } elseif ('ssh' === $serverType) {
+            $environment = $this->ssh;
+        } else {
+            throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
+        }
+
+        $environment->delete($output, $serverName, $serverFileName, $isQuiet);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getComponentServerList(string $componentMode): array
+    {
+        $serverList = $this->getServerList();
+
+        if ('all' === $componentMode) {
+            $componentServerList = $serverList;
+        } else {
+            $componentModeList = explode(',', $componentMode);
+
+            $componentServerList = [];
+
+            foreach ($serverList as $serverName) {
+                if (in_array($serverName, $componentModeList)) {
+                    $componentServerList[] = $serverName;
+                }
+            }
+        }
+
+        return $componentServerList;
     }
 }

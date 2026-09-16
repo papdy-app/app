@@ -60,4 +60,13 @@ class Remote extends Local
     ): void {
         throw new ScriptException('Upload not implemented for remote server type.');
     }
+
+    public function delete(
+        OutputInterface $output,
+        string $serverName,
+        string $serverFileName,
+        bool $isQuiet
+    ): void {
+        throw new ScriptException('Delete not implemented for remote server type.');
+    }
 }

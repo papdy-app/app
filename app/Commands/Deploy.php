@@ -11,7 +11,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Deploy extends Base
+class Deploy extends Server
 {
     protected function getCommandName(): string
     {
@@ -23,21 +23,23 @@ class Deploy extends Base
         return 'Deploy the project';
     }
 
-    protected function getCommandParameters(): array
+    protected function getServerCommandParameters(): array
     {
         return [$this->prepareInputOption('name', 'Name of the branch, tag or pull request to deploy')];
     }
 
     /**
+     * @param array<int, string> $servers
+     *
      * @throws BindingResolutionException
      */
-    protected function executeCommand(): int
+    protected function executeServerCommand(array $servers): int
     {
         $name = $this->getRequiredOption('name', 'No name to deploy specified!');
 
         $process = $this->app->make(\App\Models\Process\Deploy::class);
 
-        $process->execute($this->getOutput(), $name);
+        $process->execute($this->getOutput(), $servers, $name);
 
         return self::SUCCESS;
     }

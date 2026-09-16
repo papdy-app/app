@@ -44,6 +44,13 @@ abstract class Base
         bool $isQuiet
     ): void;
 
+    abstract public function delete(
+        OutputInterface $output,
+        string $serverName,
+        string $serverFileName,
+        bool $isQuiet
+    ): void;
+
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
      */
