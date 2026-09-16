@@ -19,7 +19,7 @@ use Matomo\Ini\IniWritingException;
  */
 class Config
 {
-    public const FILE_NAME = 'env.ini';
+    public const string FILE_NAME = 'env.ini';
 
     /** @var array<string, array<string, array<string, int|string>|float|int|string>> */
     private array $config = [];
