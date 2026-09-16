@@ -19,9 +19,14 @@ abstract class Base extends Command
 {
     public function __construct(protected Variables $variables)
     {
-        $this->signature = count($this->getCommandParameters()) > 0 ?
-            sprintf('%s {%s}', $this->getCommandName(), implode('} {', $this->getCommandParameters())) :
-            $this->getCommandName();
+        $commandName = $this->getCommandName();
+        $commandParameters = $this->getCommandParameters();
+
+        $this->signature = count($commandParameters) > 0 ? sprintf(
+            '%s {%s}',
+            $commandName,
+            implode('} {', $commandParameters)
+        ) : $commandName;
 
         $this->description = $this->getCommandDescription();
 

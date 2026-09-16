@@ -19,6 +19,9 @@
         "containerVolumes": [
             "{configPath}:/var/www/papdy:me:w"
         ],
+        "containerPaths": [
+            "/var/www/papdy/storage:www-data:wr::i"
+        ],
         "bashPath": "/var/www/papdy",
         "bashUser": "me",
         "sshAccesses": [
@@ -32,7 +35,7 @@
         "containerVolumes": [
             "{configPath}:/var/www/papdy:me:w"
         ],
-        "bashUser": "www-data"
+        "bashUser": "me"
     },
     "app3": {
         "imageName": "fewedev/cli",
@@ -40,6 +43,6 @@
         "containerVolumes": [
             "{configPath}:/var/www/papdy:me:w"
         ],
-        "bashUser": "www-data"
+        "bashUser": "me"
     }
 }
