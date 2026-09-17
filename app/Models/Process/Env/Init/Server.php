@@ -28,13 +28,13 @@ class Server extends Base
         $this->config->add('system', 'server', $name);
         $this->config->set($name, 'type', $type);
 
-        if ('remote' === $type || 'ssh' === $type) {
+        if ('remote' === $type || 'seclib' === $type || 'ssh' === $type) {
             if (null !== $host) {
                 $this->config->set($name, 'host', $host);
             }
         }
 
-        if ('ssh' === $type) {
+        if ('seclib' === $type || 'ssh' === $type) {
             if (null !== $sshPort) {
                 $this->config->set($name, 'port', $sshPort);
             }

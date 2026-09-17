@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Process;
 
-use App\Models\Command\Local;
-use App\Models\Command\Remote;
-use App\Models\Command\SSH;
 use App\Models\Config;
-use App\Models\Path;
+use App\Models\Type\Local;
+use App\Models\Type\OpenSSH;
+use App\Models\Type\Remote;
+use App\Models\Type\Seclib;
+use App\Models\Type\SSH;
+use App\Services\Path;
 use FeWeDev\Base\Arrays;
 use FeWeDev\Base\Files;
 use FeWeDev\Base\Strings;
@@ -31,11 +33,25 @@ class Deploy extends Base
         Application $app,
         Path $path,
         Local $local,
+        OpenSSH $openSsh,
         Remote $remote,
+        Seclib $seclib,
         SSH $ssh,
         protected Files $files,
     ) {
-        parent::__construct($variables, $arrays, $strings, $config, $app, $path, $local, $remote, $ssh);
+        parent::__construct(
+            $variables,
+            $arrays,
+            $strings,
+            $config,
+            $app,
+            $path,
+            $local,
+            $openSsh,
+            $remote,
+            $seclib,
+            $ssh
+        );
     }
 
     /**

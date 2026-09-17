@@ -28,14 +28,21 @@ class Server extends Base
     {
         return [
             $this->prepareInputOption('name', 'Name of server'),
-            $this->prepareDefaultInputOption('type', 'local', 'Server type (local/remote/ssh)'),
+            $this->prepareDefaultInputOption('type', 'local', 'Server type (local/openssh/remote/seclib/ssh)'),
             $this->prepareInputOption('host', 'Host if type != local'),
-            $this->prepareInputOption('sshUser', 'User if type == ssh'),
-            $this->prepareDefaultInputOption('sshPort', 22, 'Port if type == ssh'),
-            $this->prepareDefaultInputOption('sshAuth', 'agent', 'Auth if type == ssh (agent|password|key|file)'),
-            $this->prepareInputOption('sshPassword', 'Password if type == ssh and sshAuth == password'),
-            $this->prepareInputOption('sshPrivateKey', 'Private key if type == ssh and sshAuth == keys'),
-            $this->prepareInputOption('sshPrivateKeyFile', 'Private key if type == ssh and sshAuth == files'),
+            $this->prepareInputOption('sshUser', 'User if type == openssh/seclib/ssh'),
+            $this->prepareDefaultInputOption('sshPort', 22, 'Port if type == openssh/seclib/ssh'),
+            $this->prepareDefaultInputOption(
+                'sshAuth',
+                'agent',
+                'Auth if type == openssh/seclib/ssh (agent|password|key|file)'
+            ),
+            $this->prepareInputOption('sshPassword', 'Password if type == openssh/seclib/ssh and sshAuth == password'),
+            $this->prepareInputOption('sshPrivateKey', 'Private key if type == openssh/seclib/ssh and sshAuth == keys'),
+            $this->prepareInputOption(
+                'sshPrivateKeyFile',
+                'Private key if type == openssh/seclib/ssh and sshAuth == files'
+            ),
             $this->prepareDefaultInputOption('shell', 'bash', 'Shell to use'),
         ];
     }
@@ -46,9 +53,16 @@ class Server extends Base
     protected function executeCommand(): int
     {
         $name = $this->getRequiredOption('name', 'No server name specified!');
-        $type = $this->getAllowedOption('type', ['local', 'remote', 'ssh'], 'Invalid server type specified: %s');
+        $type = $this->getAllowedOption(
+            'type',
+            ['local', 'openssh', 'remote', 'seclib', 'ssh'],
+            'Invalid server type specified: %s'
+        );
 
-        $host = 'remote' === $type || 'ssh' === $type ? $this->getRequiredOption('host', 'No host specified!') : null;
+        $host = in_array($type, ['remote', 'openssh', 'seclib', 'ssh']) ? $this->getRequiredOption(
+            'host',
+            'No host specified!'
+        ) : null;
 
         $sshUser = null;
         $sshPort = null;
@@ -57,7 +71,7 @@ class Server extends Base
         $sshPrivateKey = null;
         $sshPrivateKeyFile = null;
 
-        if ('ssh' === $type) {
+        if (in_array($type, ['openssh', 'seclib', 'ssh'])) {
             $sshUser = $this->getRequiredOption('sshUser', 'No SSH user specified!');
             $sshPort = $this->getRequiredOption('sshPort', 'No SSH port specified!');
             $sshAuth = $this->getRequiredOption('sshAuth', 'No SSH auth specified!');

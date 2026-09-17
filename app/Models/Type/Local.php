@@ -1,0 +1,117 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models\Type;
+
+use App\Exceptions\ScriptException;
+use App\Services\Command;
+use Symfony\Component\Console\Output\OutputInterface;
+
+/**
+ * @author      Andreas Knollmann
+ * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+ */
+class Local implements Type
+{
+    public function __construct(protected Command $command) {}
+
+    /**
+     * @param array<string, array<int, string>|bool|string> $parameters
+     * @param array<int, string>                            $fileUploadParameters
+     * @param array<int, string>                            $fileDownloadParameters
+     */
+    public function run(
+        OutputInterface $output,
+        string $serverName,
+        string $command,
+        array $parameters,
+        array $fileUploadParameters,
+        array $fileDownloadParameters,
+        bool $isQuiet
+    ): string {
+        $command = $this->command->completeCommand($command, $parameters);
+
+        if (!$isQuiet) {
+            $output->writeln(sprintf('Executing: %s', $command));
+        }
+
+        [$exitCode, $scriptOutput] = $this->command->process($command, $isQuiet);
+
+        if (0 !== $exitCode) {
+            throw new ScriptException(sprintf('Error while executing script: %s', $command));
+        }
+
+        if (!is_string($scriptOutput)) {
+            throw new ScriptException(sprintf('Invalid script output: %s', $scriptOutput));
+        }
+
+        return $scriptOutput;
+    }
+
+    public function download(
+        OutputInterface $output,
+        string $serverName,
+        string $serverFileName,
+        string $localFileName,
+        bool $isQuiet
+    ): void {
+        if (!file_exists($serverFileName)) {
+            throw new ScriptException(sprintf('Server file not found: %s', $serverFileName));
+        }
+
+        if (!file_exists(dirname($localFileName))) {
+            if (!$isQuiet) {
+                $output->writeln(sprintf('Creating directory: %s', dirname($localFileName)));
+            }
+
+            mkdir(dirname($localFileName), 0755, true);
+        }
+
+        if (!$isQuiet) {
+            $output->writeln(sprintf('Copying file from: %s to: %s', $serverFileName, $localFileName));
+        }
+
+        copy($serverFileName, $localFileName);
+    }
+
+    public function upload(
+        OutputInterface $output,
+        string $serverName,
+        string $localFileName,
+        string $serverFileName,
+        bool $isQuiet
+    ): void {
+        if (!file_exists($localFileName)) {
+            throw new ScriptException(sprintf('Local file not found: %s', $localFileName));
+        }
+
+        if (!file_exists(dirname($serverFileName))) {
+            if (!$isQuiet) {
+                $output->writeln(sprintf('Creating directory: %s', dirname($serverFileName)));
+            }
+
+            mkdir(dirname($serverFileName), 0755, true);
+        }
+
+        if (!$isQuiet) {
+            $output->writeln(sprintf('Copying file from: %s to: %s', $localFileName, $serverFileName));
+        }
+
+        copy($localFileName, $serverFileName);
+    }
+
+    public function delete(OutputInterface $output, string $serverName, string $serverFileName, bool $isQuiet): void
+    {
+        if (!file_exists($serverFileName)) {
+            throw new ScriptException(sprintf('Server file not found: %s', $serverFileName));
+        }
+
+        if (!$isQuiet) {
+            $output->writeln(sprintf('Deleting file at: %s', $serverFileName));
+        }
+
+        unlink($serverFileName);
+    }
+}

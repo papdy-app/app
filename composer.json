@@ -21,7 +21,8 @@
         "ext-sodium": "*",
         "fewedev/base": "^2.3",
         "laravel-zero/framework": "^12.0.2",
-        "matomo/ini": "^3.0"
+        "matomo/ini": "^3.0",
+        "phpseclib/phpseclib": "^4.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.94",
