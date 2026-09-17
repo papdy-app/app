@@ -63,6 +63,7 @@ class OpenSSH implements Type
 
         $this->copyFileToHost(
             $output,
+            $serverName,
             $host,
             $port,
             $user,
@@ -74,6 +75,7 @@ class OpenSSH implements Type
 
         $this->copyFileToHost(
             $output,
+            $serverName,
             $host,
             $port,
             $user,
@@ -92,6 +94,7 @@ class OpenSSH implements Type
                 if (file_exists($file)) {
                     $this->copyFileToHost(
                         $output,
+                        $serverName,
                         $host,
                         $port,
                         $user,
@@ -151,6 +154,7 @@ class OpenSSH implements Type
         foreach ($fileDownloads as $remoteFileName => $localFileName) {
             $this->copyFileFromHost(
                 $output,
+                $serverName,
                 $host,
                 $port,
                 $user,
@@ -184,7 +188,7 @@ class OpenSSH implements Type
         $port = $this->server->getPort($serverName);
         $user = $this->server->getUser($serverName);
 
-        $this->copyFileToHost($output, $host, $port, $user, $localFileName, $serverFileName, $isQuiet);
+        $this->copyFileToHost($output, $serverName, $host, $port, $user, $localFileName, $serverFileName, $isQuiet);
     }
 
     public function delete(OutputInterface $output, string $serverName, string $serverFileName, bool $isQuiet): void
@@ -215,6 +219,7 @@ class OpenSSH implements Type
 
     private function copyFileToHost(
         OutputInterface $output,
+        string $serverName,
         string $host,
         int $port,
         string $user,
@@ -233,7 +238,7 @@ class OpenSSH implements Type
 
         $sshCommand = sprintf(
             'scp -o "StrictHostKeyChecking accept-new" %s -P %d %s %s@%s:%s',
-            $this->getAuth($host),
+            $this->getAuth($serverName),
             $port,
             $filePath,
             $user,
@@ -250,7 +255,7 @@ class OpenSSH implements Type
         if ($isExecutable) {
             $sshCommand = sprintf(
                 'ssh -o "StrictHostKeyChecking accept-new" -o LogLevel=QUIET %s -p %d %s@%s -t \'%s\'',
-                $this->getAuth($host),
+                $this->getAuth($serverName),
                 $port,
                 $user,
                 $host,
@@ -267,6 +272,7 @@ class OpenSSH implements Type
 
     private function copyFileFromHost(
         OutputInterface $output,
+        string $serverName,
         string $host,
         int $port,
         string $user,
@@ -280,7 +286,7 @@ class OpenSSH implements Type
 
         $sshCommand = sprintf(
             'scp -o "StrictHostKeyChecking accept-new" -o LogLevel=QUIET %s -P %d %s@%s:%s %s',
-            $this->getAuth($host),
+            $this->getAuth($serverName),
             $port,
             $user,
             $host,
