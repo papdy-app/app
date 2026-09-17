@@ -27,7 +27,7 @@ class Deploy extends Server
     {
         return [
             $this->prepareInputOption('name', 'Name of the branch, tag or pull request to deploy'),
-            $this->prepareInputOption('file', 'File with the build to deploy')
+            $this->prepareInputOption('file', 'File with the build to deploy'),
         ];
     }
 

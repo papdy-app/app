@@ -43,14 +43,6 @@ class Deploy extends Base
      */
     public function execute(OutputInterface $output, array $servers, string $name, ?string $localBuildNameFile): void
     {
-        $buildServerBuildNameFile = $this->runScript(
-            $output,
-            'deploy/build.sh',
-            [],
-            ['build:single'],
-            ['name' => $name]
-        );
-
         $localBuildPath = storage_path('build');
 
         if (str_contains($localBuildPath, 'phar://')) {
@@ -70,16 +62,28 @@ class Deploy extends Base
         }
 
         if ($this->variables->isEmpty($localBuildNameFile)) {
+            $buildServerBuildNameFile = $this->runScript(
+                $output,
+                'deploy/build.sh',
+                [],
+                ['build:single'],
+                ['name' => $name]
+            );
+
             $localBuildNameFile = sprintf('%s/%s', $localBuildPath, basename($buildServerBuildNameFile));
 
             $this->download($output, $buildServerBuildNameFile, $localBuildNameFile, ['build:single']);
+
+            $removeLocalFile = true;
+        } else {
+            $removeLocalFile = false;
         }
 
         $deployServerBuildNameFile = sprintf(
             '%s%s%s',
             sys_get_temp_dir(),
             DIRECTORY_SEPARATOR,
-            basename($buildServerBuildNameFile),
+            basename($localBuildNameFile),
         );
 
         $deployServer = sprintf('deploy:%s', count($servers) > 0 ? implode(',', $servers) : 'all');
@@ -102,8 +106,10 @@ class Deploy extends Base
 
         $this->delete($output, $deployServerBuildNameFile, [$deployServer]);
 
-        $output->writeln(sprintf('Deleting file at: %s', $localBuildNameFile));
+        if ($removeLocalFile) {
+            $output->writeln(sprintf('Deleting file at: %s', $localBuildNameFile));
 
-        unlink($localBuildNameFile);
+            unlink($localBuildNameFile);
+        }
     }
 }

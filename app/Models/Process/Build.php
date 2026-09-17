@@ -13,13 +13,18 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Build extends Base
 {
-    public function execute(OutputInterface $output, string $name): void
+    /**
+     * @param array<int, string> $servers
+     */
+    public function execute(OutputInterface $output, array $servers, string $name): void
     {
+        $buildServer = sprintf('build:%s', count($servers) > 0 ? implode(',', $servers) : 'all');
+
         $this->runScript(
             $output,
             'build/build.sh',
             [],
-            ['build:all'],
+            [$buildServer],
             ['name' => $name],
             [],
             [],
