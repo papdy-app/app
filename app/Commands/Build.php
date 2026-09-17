@@ -11,7 +11,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Build extends Base
+class Build extends Server
 {
     protected function getCommandName(): string
     {
@@ -23,7 +23,7 @@ class Build extends Base
         return 'Build the project';
     }
 
-    protected function getCommandParameters(): array
+    protected function getServerCommandParameters(): array
     {
         return [$this->prepareInputOption('name', 'Name of the branch, tag or pull request to build')];
     }
@@ -31,13 +31,13 @@ class Build extends Base
     /**
      * @throws BindingResolutionException
      */
-    protected function executeCommand(): int
+    protected function executeServerCommand(array $servers): int
     {
         $name = $this->getRequiredOption('name', 'No name to build specified!');
 
         $process = $this->app->make(\App\Models\Process\Build::class);
 
-        $process->execute($this->getOutput(), $name);
+        $process->execute($this->getOutput(), $servers, $name);
 
         return self::SUCCESS;
     }
