@@ -41,7 +41,7 @@ class Deploy extends Base
     /**
      * @param array<int, string> $servers
      */
-    public function execute(OutputInterface $output, array $servers, string $name): void
+    public function execute(OutputInterface $output, array $servers, string $name, ?string $localBuildNameFile): void
     {
         $buildServerBuildNameFile = $this->runScript(
             $output,
@@ -69,9 +69,11 @@ class Deploy extends Base
             $this->files->createDirectory($localBuildPath, 0755);
         }
 
-        $localBuildNameFile = sprintf('%s/%s', $localBuildPath, basename($buildServerBuildNameFile));
+        if ($this->variables->isEmpty($localBuildNameFile)) {
+            $localBuildNameFile = sprintf('%s/%s', $localBuildPath, basename($buildServerBuildNameFile));
 
-        $this->download($output, $buildServerBuildNameFile, $localBuildNameFile, ['build:single']);
+            $this->download($output, $buildServerBuildNameFile, $localBuildNameFile, ['build:single']);
+        }
 
         $deployServerBuildNameFile = sprintf(
             '%s%s%s',
