@@ -1,0 +1,7 @@
+{
+    "platform": "all",
+    "repository": "fewe-dev/php-bin",
+    "src": "build/papdy.phar",
+    "dest": "build",
+    "php": "8.3"
+}
