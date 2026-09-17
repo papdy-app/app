@@ -2,59 +2,21 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Command;
+namespace App\Services;
 
-use Symfony\Component\Console\Output\OutputInterface;
+use App\Exceptions\ScriptException;
 
 /**
  * @author      Andreas Knollmann
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Base
+class Command
 {
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
-     * @param array<int, string>                            $fileUploadParameters
-     * @param array<int, string>                            $fileDownloadParameters
      */
-    abstract public function run(
-        OutputInterface $output,
-        string $serverName,
-        string $command,
-        array $parameters,
-        array $fileUploadParameters,
-        array $fileDownloadParameters,
-        bool $isQuiet
-    ): string;
-
-    abstract public function download(
-        OutputInterface $output,
-        string $serverName,
-        string $serverFileName,
-        string $localFileName,
-        bool $isQuiet
-    ): void;
-
-    abstract public function upload(
-        OutputInterface $output,
-        string $serverName,
-        string $localFileName,
-        string $serverFileName,
-        bool $isQuiet
-    ): void;
-
-    abstract public function delete(
-        OutputInterface $output,
-        string $serverName,
-        string $serverFileName,
-        bool $isQuiet
-    ): void;
-
-    /**
-     * @param array<string, array<int, string>|bool|string> $parameters
-     */
-    protected function completeCommand(string $scriptPath, array $parameters): string
+    public function completeCommand(string $scriptPath, array $parameters): string
     {
         $command = $scriptPath;
 
@@ -80,7 +42,36 @@ abstract class Base
     /**
      * @return array<int, null|int|string>
      */
-    protected function processResult(string $completeOutput): array
+    public function process(string $command, bool $isQuiet): array
+    {
+        $proc = popen("{$command} 2>&1 ; echo Exit status: $?", 'r');
+
+        if (false === $proc) {
+            throw new ScriptException(sprintf('Error while executing command: %s', $command));
+        }
+
+        $completeOutput = '';
+
+        while (!feof($proc)) {
+            $liveOutput = fread($proc, 4096);
+            $completeOutput = $completeOutput.$liveOutput;
+
+            if (!$isQuiet) {
+                echo "{$liveOutput}";
+            }
+
+            @flush();
+        }
+
+        pclose($proc);
+
+        return $this->processResult($completeOutput);
+    }
+
+    /**
+     * @return array<int, null|int|string>
+     */
+    public function processResult(string $completeOutput): array
     {
         // get exit status
         preg_match('/[0-9]+$/', $completeOutput, $matches);

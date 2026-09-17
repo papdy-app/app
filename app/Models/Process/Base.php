@@ -7,11 +7,14 @@ namespace App\Models\Process;
 use App\Exceptions\MissingConfigException;
 use App\Exceptions\ScriptException;
 use App\Exceptions\ServerNotFoundException;
-use App\Models\Command\Local;
-use App\Models\Command\Remote;
-use App\Models\Command\SSH;
 use App\Models\Config;
-use App\Models\Path;
+use App\Models\Type\Local;
+use App\Models\Type\OpenSSH;
+use App\Models\Type\Remote;
+use App\Models\Type\Seclib;
+use App\Models\Type\SSH;
+use App\Models\Type\Type;
+use App\Services\Path;
 use FeWeDev\Base\Arrays;
 use FeWeDev\Base\Strings;
 use FeWeDev\Base\Variables;
@@ -35,8 +38,10 @@ abstract class Base
         protected Application $app,
         protected Path $path,
         protected Local $local,
+        protected OpenSSH $openSsh,
         protected Remote $remote,
-        protected SSH $ssh
+        protected Seclib $seclib,
+        protected SSH $ssh,
     ) {}
 
     protected function getServerName(?string $serverName, ?string $host, bool $isRequired = true): ?string
@@ -547,15 +552,7 @@ abstract class Base
     ): string {
         $serverType = $this->config->requiredValue($serverName, 'type');
 
-        if ('local' === $serverType) {
-            $environment = $this->local;
-        } elseif ('remote' === $serverType) {
-            $environment = $this->remote;
-        } elseif ('ssh' === $serverType) {
-            $environment = $this->ssh;
-        } else {
-            throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
-        }
+        $type = $this->getType($serverType);
 
         foreach ($preCommandParameters as $preCommandParameter) {
             $preCommands = $this->arrays->getValue($parameters, $preCommandParameter);
@@ -571,7 +568,7 @@ abstract class Base
                         $parameters
                     );
 
-                    $environment->run($output, $serverName, $preCommand, [], [], [], $isQuiet);
+                    $type->run($output, $serverName, $preCommand, [], [], [], $isQuiet);
                 }
 
                 unset($parameters[$preCommandParameter]);
@@ -598,7 +595,7 @@ abstract class Base
             }
         }
 
-        $scriptOutput = $environment->run(
+        $scriptOutput = $type->run(
             $output,
             $serverName,
             $command,
@@ -614,7 +611,7 @@ abstract class Base
                 $parameters
             );
 
-            $environment->run($output, $serverName, $postCommand, [], [], [], $isQuiet);
+            $type->run($output, $serverName, $postCommand, [], [], [], $isQuiet);
         }
 
         return $scriptOutput;
@@ -629,17 +626,9 @@ abstract class Base
     ): void {
         $serverType = $this->config->requiredValue($serverName, 'type');
 
-        if ('local' === $serverType) {
-            $environment = $this->local;
-        } elseif ('remote' === $serverType) {
-            $environment = $this->remote;
-        } elseif ('ssh' === $serverType) {
-            $environment = $this->ssh;
-        } else {
-            throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
-        }
+        $type = $this->getType($serverType);
 
-        $environment->download($output, $serverName, $serverFileName, $localFileName, $isQuiet);
+        $type->download($output, $serverName, $serverFileName, $localFileName, $isQuiet);
     }
 
     private function executeUpload(
@@ -651,17 +640,9 @@ abstract class Base
     ): void {
         $serverType = $this->config->requiredValue($serverName, 'type');
 
-        if ('local' === $serverType) {
-            $environment = $this->local;
-        } elseif ('remote' === $serverType) {
-            $environment = $this->remote;
-        } elseif ('ssh' === $serverType) {
-            $environment = $this->ssh;
-        } else {
-            throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
-        }
+        $type = $this->getType($serverType);
 
-        $environment->upload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
+        $type->upload($output, $serverName, $localFileName, $serverFileName, $isQuiet);
     }
 
     private function executeDelete(
@@ -672,17 +653,9 @@ abstract class Base
     ): void {
         $serverType = $this->config->requiredValue($serverName, 'type');
 
-        if ('local' === $serverType) {
-            $environment = $this->local;
-        } elseif ('remote' === $serverType) {
-            $environment = $this->remote;
-        } elseif ('ssh' === $serverType) {
-            $environment = $this->ssh;
-        } else {
-            throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
-        }
+        $type = $this->getType($serverType);
 
-        $environment->delete($output, $serverName, $serverFileName, $isQuiet);
+        $type->delete($output, $serverName, $serverFileName, $isQuiet);
     }
 
     /**
@@ -707,5 +680,26 @@ abstract class Base
         }
 
         return $componentServerList;
+    }
+
+    private function getType(string $serverType): Type
+    {
+        if ('local' === $serverType) {
+            return $this->local;
+        }
+        if ('openssh' === $serverType) {
+            return $this->openSsh;
+        }
+        if ('remote' === $serverType) {
+            return $this->remote;
+        }
+        if ('seclib' === $serverType) {
+            return $this->seclib;
+        }
+        if ('ssh' === $serverType) {
+            return $this->ssh;
+        }
+
+        throw new ScriptException(sprintf('Unsupported server type: %s', $serverType));
     }
 }

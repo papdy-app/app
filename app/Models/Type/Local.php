@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Command;
+namespace App\Models\Type;
 
 use App\Exceptions\ScriptException;
+use App\Services\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -12,8 +13,10 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Local extends Base
+class Local implements Type
 {
+    public function __construct(protected Command $command) {}
+
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
      * @param array<int, string>                            $fileUploadParameters
@@ -28,13 +31,13 @@ class Local extends Base
         array $fileDownloadParameters,
         bool $isQuiet
     ): string {
-        $command = $this->completeCommand($command, $parameters);
+        $command = $this->command->completeCommand($command, $parameters);
 
         if (!$isQuiet) {
             $output->writeln(sprintf('Executing: %s', $command));
         }
 
-        [$exitCode, $scriptOutput] = $this->process($command, $isQuiet);
+        [$exitCode, $scriptOutput] = $this->command->process($command, $isQuiet);
 
         if (0 !== $exitCode) {
             throw new ScriptException(sprintf('Error while executing script: %s', $command));
@@ -110,34 +113,5 @@ class Local extends Base
         }
 
         unlink($serverFileName);
-    }
-
-    /**
-     * @return array<int, null|int|string>
-     */
-    protected function process(string $command, bool $isQuiet): array
-    {
-        $proc = popen("{$command} 2>&1 ; echo Exit status: $?", 'r');
-
-        if (false === $proc) {
-            throw new ScriptException(sprintf('Error while executing command: %s', $command));
-        }
-
-        $completeOutput = '';
-
-        while (!feof($proc)) {
-            $liveOutput = fread($proc, 4096);
-            $completeOutput = $completeOutput.$liveOutput;
-
-            if (!$isQuiet) {
-                echo "{$liveOutput}";
-            }
-
-            @flush();
-        }
-
-        pclose($proc);
-
-        return $this->processResult($completeOutput);
     }
 }

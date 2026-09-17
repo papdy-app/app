@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Models\Command;
+namespace App\Models\Type;
 
-use App\Exceptions\ScriptException;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -12,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Remote extends Local
+interface Type
 {
     /**
      * @param array<string, array<int, string>|bool|string> $parameters
@@ -27,19 +26,7 @@ class Remote extends Local
         array $fileUploadParameters,
         array $fileDownloadParameters,
         bool $isQuiet
-    ): string {
-        $parameters['remote'] = true;
-
-        return parent::run(
-            $output,
-            $serverName,
-            $command,
-            $parameters,
-            $fileUploadParameters,
-            $fileDownloadParameters,
-            $isQuiet
-        );
-    }
+    ): string;
 
     public function download(
         OutputInterface $output,
@@ -47,9 +34,7 @@ class Remote extends Local
         string $serverFileName,
         string $localFileName,
         bool $isQuiet
-    ): void {
-        throw new ScriptException('Download not implemented for remote server type.');
-    }
+    ): void;
 
     public function upload(
         OutputInterface $output,
@@ -57,16 +42,12 @@ class Remote extends Local
         string $localFileName,
         string $serverFileName,
         bool $isQuiet
-    ): void {
-        throw new ScriptException('Upload not implemented for remote server type.');
-    }
+    ): void;
 
     public function delete(
         OutputInterface $output,
         string $serverName,
         string $serverFileName,
         bool $isQuiet
-    ): void {
-        throw new ScriptException('Delete not implemented for remote server type.');
-    }
+    ): void;
 }

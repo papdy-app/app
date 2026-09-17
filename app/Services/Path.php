@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Services;
 
 use FeWeDev\Base\Files;
 use FeWeDev\Base\Variables;
