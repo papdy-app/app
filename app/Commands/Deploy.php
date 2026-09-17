@@ -25,7 +25,10 @@ class Deploy extends Server
 
     protected function getServerCommandParameters(): array
     {
-        return [$this->prepareInputOption('name', 'Name of the branch, tag or pull request to deploy')];
+        return [
+            $this->prepareInputOption('name', 'Name of the branch, tag or pull request to deploy'),
+            $this->prepareInputOption('file', 'File with the build to deploy'),
+        ];
     }
 
     /**
@@ -36,10 +39,11 @@ class Deploy extends Server
     protected function executeServerCommand(array $servers): int
     {
         $name = $this->getRequiredOption('name', 'No name to deploy specified!');
+        $localBuildNameFile = $this->getOption('file');
 
         $process = $this->app->make(\App\Models\Process\Deploy::class);
 
-        $process->execute($this->getOutput(), $servers, $name);
+        $process->execute($this->getOutput(), $servers, $name, $localBuildNameFile);
 
         return self::SUCCESS;
     }
