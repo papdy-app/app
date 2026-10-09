@@ -390,10 +390,10 @@ if [[ -f composer.json ]]; then
   fi
   if [[ "${buildUser}" != "${currentUser}" ]]; then
     echo "Installing composer project in path: ${buildNamePath} with user: ${buildUser}"
-    sudo -H -u "${buildUser}" bash -c "${processEnvironmentVariables[*]} ${phpExecutable} ${composerExecutable} install --ansi --prefer-dist"
+    sudo -H -u "${buildUser}" bash -c "${processEnvironmentVariables[*]} ${phpExecutable} ${composerExecutable} install --ansi --prefer-dist --no-dev"
   else
     echo "Installing composer project in path: ${buildNamePath}"
-    "${phpExecutable}" "${composerExecutable}" install --ansi --prefer-dist
+    "${phpExecutable}" "${composerExecutable}" install --ansi --prefer-dist --no-dev
   fi
 fi
 
