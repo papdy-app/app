@@ -106,7 +106,7 @@ class Deploy extends Base
 
         $this->upload($output, $localBuildNameFile, $deployServerBuildNameFile, [$deployServer]);
 
-        $deployId = date('Y_m_d_H_m_s');
+        $deployId = date('Y_m_d_H_i_s');
 
         $this->runScript(
             $output,
