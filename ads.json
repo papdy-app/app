@@ -27,6 +27,10 @@
         "sshAccesses": [
             "me:app2:me",
             "me:app3:me"
+        ],
+        "postContainerInstallDockerScript": "{configPath}/docker/dev/install-post.sh",
+        "postContainerInstallDockerParameters": [
+            "-appPath /var/www/papdy"
         ]
     },
     "app2": {

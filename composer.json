@@ -60,12 +60,12 @@
         "fix": "vendor/bin/php-cs-fixer fix app",
         "cs": "vendor/bin/php-cs-fixer fix app --dry-run --verbose --diff",
         "ps": "vendor/bin/phpstan analyse",
-        "phar": "~/.config/composer/vendor/bin/box compile",
-        "bin": "~/.config/composer/vendor/bin/phpacker build",
+        "phar": "box compile",
+        "bin": "phpacker build",
         "deb": "cd build/linux && mkdir -p debian/usr/bin && cp linux-x64 debian/usr/bin/papdy && dpkg-deb --build debian papdy.deb && rm -rf debian/usr && cd ../..",
         "build": [
-            "~/.config/composer/vendor/bin/box compile",
-            "~/.config/composer/vendor/bin/phpacker build",
+            "box compile",
+            "phpacker build",
             "cd build/linux && mkdir -p debian/usr/bin && cp linux-x64 debian/usr/bin/papdy && dpkg-deb --build debian papdy.deb && rm -rf debian/usr && cd ../.."
         ]
     }
