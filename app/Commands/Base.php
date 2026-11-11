@@ -37,8 +37,11 @@ abstract class Base extends Command
     {
         try {
             return $this->executeCommand();
-        } catch (CommandException $exception) {
+        } catch (InputOptionException $exception) {
             return $this->exitWithError($exception->getMessage(), $exception->getCode());
+        } catch (CommandException $exception) {
+            // not caused by the input, so the command help would not help
+            return $this->exitWithError($exception->getMessage(), $exception->getCode(), false);
         }
     }
 
@@ -53,13 +56,16 @@ abstract class Base extends Command
 
     abstract protected function executeCommand(): int;
 
-    protected function exitWithError(string $message, int $resultCode = self::FAILURE): int
+    protected function exitWithError(string $message, int $resultCode = self::FAILURE, bool $showHelp = true): int
     {
         $this->error($message);
-        $this->output->writeln('');
 
-        $helper = new DescriptorHelper();
-        $helper->describe($this->output, $this);
+        if ($showHelp) {
+            $this->output->writeln('');
+
+            $helper = new DescriptorHelper();
+            $helper->describe($this->output, $this);
+        }
 
         return $resultCode;
     }

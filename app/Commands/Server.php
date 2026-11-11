@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
+use App\Services\Banner;
+
 /**
  * @author      Andreas Knollmann
  * @copyright   2014-2026 Softwareentwicklung Andreas Knollmann
@@ -29,6 +31,8 @@ abstract class Server extends Base
 
     protected function executeCommand(): int
     {
+        $this->app->make(Banner::class)->writeToTerminal($this->getOutput(), $this->getApplication()?->getVersion());
+
         $servers = $this->getOptionList('server');
 
         return $this->executeServerCommand($servers);

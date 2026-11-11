@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\Config;
 use App\Models\Process\Parameter\Build;
 use App\Models\Process\Parameter\Deploy;
+use App\Services\Describer;
 use FeWeDev\Base\Variables;
 use Illuminate\Support\ServiceProvider;
 use LaravelZero\Framework\Application;
+use NunoMaduro\LaravelConsoleSummary\Contracts\DescriberContract;
 
 /**
  * @author      Andreas Knollmann
@@ -16,7 +18,11 @@ use LaravelZero\Framework\Application;
  */
 class AppServiceProvider extends ServiceProvider
 {
-    public function boot(): void {}
+    public function boot(): void
+    {
+        // in boot, so that it replaces the binding of the console summary package regardless of the provider order
+        $this->app->singleton(DescriberContract::class, Describer::class);
+    }
 
     public function register(): void
     {
